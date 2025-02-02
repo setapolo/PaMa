@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Country Detection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>User Country Detection</h1>
+    <h2>Basic Information</h2>
+    <pre id="info">Loading...</pre>
+    
+    <script>
+        async function fetchIPInfo() {
+            try {
+                let response = await fetch("https://ipapi.co/json/");
+                let data = await response.json();
+                return `IP: ${data.ip}\nCountry: ${data.country_name} (${data.country})\nRegion: ${data.region}\nCity: ${data.city}`;
+            } catch (error) {
+                return "Failed to retrieve IP information.";
+            }
+        }
+
+        function getBrowserInfo() {
+            return `Browser Language: ${navigator.language}\nLanguage List: ${navigator.languages.join(", ")}\nTime Zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+        }
+
+        function getWebGLInfo() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                if (debugInfo) {
+                    return `GPU: ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}`;
+                }
+            }
+            return "Failed to retrieve GPU information.";
+        }
+
+        async function displayInfo() {
+            const ipInfo = await fetchIPInfo();
+            const browserInfo = getBrowserInfo();
+            const webGLInfo = getWebGLInfo();
+
+            document.getElementById("info").textContent = `${ipInfo}\n\n${browserInfo}\n\n${webGLInfo}`;
+        }
+
+        displayInfo();
+    </script>
+</body>
+</html>
