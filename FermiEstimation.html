@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fermi Estimation: Number of Piano Tuners</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .input-group {
+            margin: 10px 0;
+            text-align: left;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+        }
+        #result {
+            font-size: 24px;
+            margin-top: 20px;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fermi Estimation: Number of Piano Tuners</h1>
+
+        <div class="input-group">
+            <label>Population: <span id="population-value">2700000</span></label>
+            <input type="range" id="population" min="1000000" max="5000000" step="50000" value="2700000">
+        </div>
+
+        <div class="input-group">
+            <label>People per Household: <span id="householdSize-value">2.5</span></label>
+            <input type="range" id="householdSize" min="1" max="5" step="0.1" value="2.5">
+        </div>
+
+        <div class="input-group">
+            <label>Piano Ownership Rate (%): <span id="pianoOwnershipRate-value">10</span></label>
+            <input type="range" id="pianoOwnershipRate" min="1" max="50" step="1" value="10">
+        </div>
+
+        <div class="input-group">
+            <label>Tuning Frequency (times/year): <span id="tuningFrequency-value">1</span></label>
+            <input type="range" id="tuningFrequency" min="0.1" max="5" step="0.1" value="1">
+        </div>
+
+        <div class="input-group">
+            <label>Pianos Tuned per Day: <span id="tuningsPerDay-value">3</span></label>
+            <input type="range" id="tuningsPerDay" min="1" max="10" step="1" value="3">
+        </div>
+
+        <div class="input-group">
+            <label>Working Days per Year: <span id="workingDaysPerYear-value">250</span></label>
+            <input type="range" id="workingDaysPerYear" min="100" max="365" step="5" value="250">
+        </div>
+
+        <div id="result">Estimated Number of Tuners: <span id="tuner-count">Calculating...</span></div>
+    </div>
+
+    <script>
+        function estimatePianoTuners() {
+            // Retrieve each parameter
+            let population = parseInt(document.getElementById("population").value);
+            let householdSize = parseFloat(document.getElementById("householdSize").value);
+            let pianoOwnershipRate = parseFloat(document.getElementById("pianoOwnershipRate").value) / 100;
+            let tuningFrequency = parseFloat(document.getElementById("tuningFrequency").value);
+            let tuningsPerDay = parseInt(document.getElementById("tuningsPerDay").value);
+            let workingDaysPerYear = parseInt(document.getElementById("workingDaysPerYear").value);
+
+            // Calculate the number of households owning pianos
+            let numHouseholds = population / householdSize;
+            let numPianos = numHouseholds * pianoOwnershipRate;
+
+            // Calculate the total number of tunings required per year
+            let totalTuningsPerYear = numPianos * tuningFrequency;
+
+            // Calculate the number of tunings a single tuner can perform annually
+            let tuningsPerTunerPerYear = tuningsPerDay * workingDaysPerYear;
+
+            // Estimate the required number of tuners (rounded)
+            let estimatedTuners = Math.round(totalTuningsPerYear / tuningsPerTunerPerYear);
+
+            // Display the result
+            document.getElementById("tuner-count").textContent = estimatedTuners;
+        }
+
+        // Recalculate when sliders are adjusted
+        document.querySelectorAll("input[type=range]").forEach(input => {
+            input.addEventListener("input", () => {
+                // Update each displayed value
+                document.getElementById(input.id + "-value").textContent = input.value;
+                estimatePianoTuners();
+            });
+        });
+
+        // Initial calculation
+        estimatePianoTuners();
+    </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-VYN4SZK0E6');
+</script>
+  </head>
+  <body>
+    <main>
+    </main>123
+    <script src="sketch.js"></script>
+ <iframe width="320"
+    src="https://www.youtube.com/embed/JC-Erk0hMzc?autoplay=1&mute=1&playsinline=1&loop=1"
+    title="YouTube video player" frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen>
+</iframe>
+    
+  </body>
+</html>
+
