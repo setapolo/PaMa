@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMoji SVG Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        textarea {
+            width: 80%;
+            height: 80px;
+            font-size: 16px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .svg-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>OpenMoji SVG Viewer</h2>
+    <p>Enter the OpenMoji CDN URL:</p>
+    <textarea id="emojiUrl" placeholder="Example: https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@15.0.0/color/svg/1F600.svg">https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@15.0.0/color/svg/1F600.svg</textarea>
+    <br>
+    <button onclick="displayEmoji()">Display</button>
+
+    <div class="svg-container">
+        <h3>Result:</h3>
+        <img id="emojiDisplay" src="" alt="OpenMoji Emoji" width="100" height="100">
+    </div>
+
+    <script>
+        function displayEmoji() {
+            const url = document.getElementById("emojiUrl").value;
+            const imgElement = document.getElementById("emojiDisplay");
+
+            if (url.trim() !== "") {
+                imgElement.src = url;
+                imgElement.style.display = "block";
+            } else {
+                imgElement.style.display = "none";
+            }
+        }
+    </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-VYN4SZK0E6');
+</script>
+ <iframe width="320"
+    src="https://www.youtube.com/embed/JC-Erk0hMzc?autoplay=1&mute=1&playsinline=1&loop=1"
+    title="YouTube video player" frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen>
+</iframe>
+</body>
+</html>
