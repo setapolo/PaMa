@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Playlist Player</title>
+    <script>
+        let player;
+        let videoIndex = 0;
+        const videos = [
+            { id: "z9tECKZ60zk", description: "This video is a YouTube API demo." },
+            { id: "dRokdqRtles", description: "This is the famous Rickroll video." },
+            { id: "btyhpyJTyXg", description: "This is the famous Rickroll video." },
+            { id: "-2OyL6EA5Sc", description: "This is the famous Rickroll video." },
+            { id: "f4axTBf9CWY", description: "This is the famous Rickroll video." },
+        ];
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player("player", {
+                height: "360",
+                width: "640",
+                videoId: videos[videoIndex].id,
+                playerVars: { 'autoplay': 1, 'mute': 1 },
+                events: {
+                    "onReady": onPlayerReady,
+                    "onStateChange": onPlayerStateChange
+                }
+            });
+            updatePlaylistDisplay();
+        }
+
+        function onPlayerReady(event) {
+            event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                setTimeout(nextVideo, 1000);
+            }
+        }
+
+        function nextVideo() {
+            videoIndex = (videoIndex + 1) % videos.length;
+            player.loadVideoById(videos[videoIndex].id);
+            updatePlaylistDisplay();
+        }
+
+        function updatePlaylistDisplay() {
+            document.getElementById("description").innerText = videos[videoIndex].description;
+            let rows = document.querySelectorAll("#playlistTable tbody tr");
+            rows.forEach((row, index) => {
+                row.style.backgroundColor = index === videoIndex ? "#FFD700" : "white";
+            });
+        }
+    </script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ryuichi Sakamoto Playlist</h1>
+    <div id="player"></div>
+    <p id="description"></p>
+
+    <table id="playlistTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Video ID</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>z9tECKZ60zk</td><td>Merry Christmas Mr.Lawrence</td></tr>
+            <tr><td>2</td><td>dRokdqRtles</td><td>Tong Poo</td></tr>
+            <tr><td>3</td><td>btyhpyJTyXg</td><td>Energy Flow</td></tr>
+            <tr><td>4</td><td>-2OyL6EA5Sc</td><td>Self Portrait</td></tr>
+            <tr><td>5</td><td>f4axTBf9CWY</td><td>The Last Emperor</td></tr>
+        </tbody>
+    </table>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-VYN4SZK0E6');
+</script>    
+</body>
+</html>
