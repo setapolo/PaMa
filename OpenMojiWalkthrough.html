@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMoji Walkthrough</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        #emoji-display { font-size: 100px; margin: 20px; }
+        #emoji-name { font-size: 24px; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+    </style>
+</head>
+<body onload="toggleAuto()">
+    <h1>OpenMoji Walkthrough</h1>
+    <div id="emoji-display">😀</div>
+    <div id="emoji-name">Loading...</div>
+    <button onclick="prevEmoji()">← Previous</button>
+    <button onclick="nextEmoji()">Next →</button>
+    <button onclick="toggleAuto()">▶ Auto Play</button>
+
+    <script>
+        let emojis = [];
+        let currentIndex = 0;
+        let autoPlay = false;
+        let autoInterval;
+
+        async function fetchEmojis() {
+            const response = await fetch("https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/data/openmoji.json");
+            emojis = await response.json();
+            updateEmoji();
+        }
+
+        function updateEmoji() {
+            if (emojis.length === 0) return;
+            const emoji = emojis[currentIndex];
+            const hexcode = emoji.hexcode;
+            document.getElementById("emoji-display").innerHTML = `<img src="https://openmoji.org/data/color/svg/${hexcode}.svg" width="100" height="100">`;
+            document.getElementById("emoji-name").textContent = emoji.annotation;
+        }
+
+        function prevEmoji() {
+            currentIndex = (currentIndex - 1 + emojis.length) % emojis.length;
+            updateEmoji();
+        }
+
+        function nextEmoji() {
+            currentIndex = (currentIndex + 1) % emojis.length;
+            updateEmoji();
+        }
+
+        function toggleAuto() {
+            autoPlay = !autoPlay;
+            if (autoPlay) {
+                autoInterval = setInterval(nextEmoji, 1000);
+            } else {
+                clearInterval(autoInterval);
+            }
+        }
+
+        fetchEmojis();
+    </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-VYN4SZK0E6');
+</script>    
+ <iframe width="320"
+    src="https://www.youtube.com/embed/JC-Erk0hMzc?autoplay=1&mute=1&playsinline=1&loop=1"
+    title="YouTube video player" frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen>
+</iframe>
+  
+</body>
+</html>
