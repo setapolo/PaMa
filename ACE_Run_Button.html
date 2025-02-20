@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas and ACE Editor with Run Button</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      font-family: sans-serif;
+    }
+    /* Container for the p5.js canvas (top area) */
+    #canvas-container {
+      flex: 1;
+      background: #ddd;
+    }
+    /* Editor section (bottom area, 40% of viewport height) */
+    #editor-section {
+      height: 40vh;
+      display: flex;
+      flex-direction: column;
+      border-top: 2px solid #999;
+    }
+    /* Controls area for the Run button */
+    #controls {
+      padding: 10px;
+      background: #eee;
+      text-align: center;
+    }
+    /* Container for the ACE editor */
+    #editor-container {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- p5.js canvas container -->
+  <div id="canvas-container"></div>
+  <!-- Editor and controls container -->
+  <div id="editor-section">
+    <div id="controls">
+      <button id="runButton">Run</button>
+    </div>
+    <div id="editor-container"></div>
+  </div>
+
+  <!-- p5.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <!-- ACE Editor Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
+  <script>
+    // Initialize ACE Editor
+    var editor = ace.edit("editor-container");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+
+    // Initial p5.js sketch code in instance mode
+    var initialCode = `
+var sketch = function(p) {
+  p.setup = function() {
+    // Create a canvas with width equal to windowWidth and height 60% of windowHeight,
+    // then place it inside the "canvas-container" element.
+    p.createCanvas(p.windowWidth, p.windowHeight * 0.6, p.WEBGL).parent("canvas-container");
+    p.angleMode(p.RADIANS);
+  };
+
+  p.draw = function() {
+    p.background(135, 206, 235); // Light blue background
+    p.orbitControl(); // Enable mouse control for camera view
+    p.ambientLight(120);
+    p.directionalLight(255, 255, 255, 0, -1, 0);
+    
+    // Draw the ground (grass)
+    p.push();
+    p.translate(0, 150, 0);
+    p.rotateX(p.HALF_PI);
+    p.ambientMaterial(100, 200, 100);
+    p.plane(3000, 3000);
+    p.pop();
+    
+    // Draw the central stage
+    p.push();
+    p.translate(0, 0, 0);
+    p.ambientMaterial(200, 150, 100);
+    p.box(200, 20, 200); // Box with width 200, height 20, depth 200
+    p.pop();
+    
+    // Draw the seating area (circular arrangement in multiple layers)
+    let layers = 3;         // Number of seating layers
+    let blocksPerLayer = 36; // Number of blocks per layer
+    let startRadius = 250;   // Radius of the innermost layer
+    let layerHeight = 30;    // Height difference between layers
+    let blockSize = 40;      // Size of each block
+    
+    for (let l = 0; l < layers; l++) {
+      let r = startRadius + l * blockSize; // Increase radius for each layer
+      for (let i = 0; i < blocksPerLayer; i++) {
+        let angle = i * p.TWO_PI / blocksPerLayer;
+        let x = r * p.cos(angle);
+        let z = r * p.sin(angle);
+        p.push();
+        // Position each block and rotate it to face the center
+        p.translate(x, -l * layerHeight, z);
+        p.rotateY(-angle);
+        p.ambientMaterial(150, 75, 0);
+        p.box(blockSize, blockSize, blockSize);
+        p.pop();
+      }
+    }
+  };
+
+  p.windowResized = function() {
+    p.resizeCanvas(p.windowWidth, p.windowHeight * 0.6);
+  };
+};
+
+window.myP5 = new p5(sketch, "canvas-container");
+`;
+    editor.setValue(initialCode, -1); // Set the initial code and move the cursor to the start
+
+    // Run button click event handler
+    document.getElementById("runButton").addEventListener("click", function() {
+      // Remove any existing p5 instance
+      if (window.myP5) {
+        window.myP5.remove();
+      }
+      // Clear the canvas container
+      document.getElementById("canvas-container").innerHTML = "";
+      // Retrieve code from ACE Editor and evaluate it
+      try {
+        eval(editor.getValue());
+      } catch (e) {
+        console.error("Error evaluating code: ", e);
+      }
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script>
+  
+</body>
+</html>
