@@ -11,7 +11,7 @@
     #openEditorBtn {position: absolute; top:450px; }
   </style>
   <meta charset="UTF-8">
-  <title>p5.js Example002</title>
+  <title>p5.js Example002 rev2</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>
 </head>
 <body>
@@ -46,7 +46,11 @@
     }  
     `, -1);
     document.getElementById("openEditorBtn").addEventListener("click", function() {
-      ga("send", "event", "button", "click", "myButton", 1);
+    gtag("event", "click", {
+        "event_category": "button",
+        "event_label": "myButton",
+        "value": 1
+    });
       const code = editor.getValue();
       const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
       window.open(url, '_blank');
