@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js Example004</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>
+</head>
+<body>
+  <script>
+let cols = 10;
+let rows = 8;
+let tileSize = 32;
+let map = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+  [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+let player;
+let offsetX = 0;
+let offsetY = 0;
+
+function setup() {
+  createCanvas(320, 256);
+  player = createVector(1, 1);
+}
+
+function draw() {
+  background(0);
+  drawMap();
+  drawPlayer();
+}
+
+function drawMap() {
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      let tile = map[y][x];
+      let px = x * tileSize - offsetX;
+      let py = y * tileSize - offsetY;
+      fill(tile === 0 ? 200 : 100);
+      rect(px, py, tileSize, tileSize);
+    }
+  }
+}
+
+function drawPlayer() {
+  fill(255, 0, 0);
+  let px = player.x * tileSize - offsetX;
+  let py = player.y * tileSize - offsetY;
+  ellipse(px + tileSize / 2, py + tileSize / 2, tileSize * 0.8);
+}
+
+function keyPressed() {
+  let dx = 0, dy = 0;
+  if (keyCode === LEFT_ARROW) dx = -1;
+  if (keyCode === RIGHT_ARROW) dx = 1;
+  if (keyCode === UP_ARROW) dy = -1;
+  if (keyCode === DOWN_ARROW) dy = 1;
+  
+  let newX = player.x + dx;
+  let newY = player.y + dy;
+  
+  if (newX >= 0 && newX < cols && newY >= 0 && newY < rows && map[newY][newX] === 0) {
+    player.x = newX;
+    player.y = newY;
+    offsetX = player.x * tileSize - width / 2 + tileSize / 2;
+    offsetY = player.y * tileSize - height / 2 + tileSize / 2;
+    offsetX = constrain(offsetX, 0, cols * tileSize - width);
+    offsetY = constrain(offsetY, 0, rows * tileSize - height);
+  }
+}
+  </script>
+  <div id="editor"></div>
+  <button id="openEditorBtn">go p5 Editor </button>  
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+    editor.setValue(`
+let cols = 10;
+let rows = 8;
+let tileSize = 32;
+let map = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+  [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+let player;
+let offsetX = 0;
+let offsetY = 0;
+
+function setup() {
+  createCanvas(320, 256);
+  player = createVector(1, 1);
+}
+
+function draw() {
+  background(0);
+  drawMap();
+  drawPlayer();
+}
+
+function drawMap() {
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      let tile = map[y][x];
+      let px = x * tileSize - offsetX;
+      let py = y * tileSize - offsetY;
+      fill(tile === 0 ? 200 : 100);
+      rect(px, py, tileSize, tileSize);
+    }
+  }
+}
+
+function drawPlayer() {
+  fill(255, 0, 0);
+  let px = player.x * tileSize - offsetX;
+  let py = player.y * tileSize - offsetY;
+  ellipse(px + tileSize / 2, py + tileSize / 2, tileSize * 0.8);
+}
+
+function keyPressed() {
+  let dx = 0, dy = 0;
+  if (keyCode === LEFT_ARROW) dx = -1;
+  if (keyCode === RIGHT_ARROW) dx = 1;
+  if (keyCode === UP_ARROW) dy = -1;
+  if (keyCode === DOWN_ARROW) dy = 1;
+  
+  let newX = player.x + dx;
+  let newY = player.y + dy;
+  
+  if (newX >= 0 && newX < cols && newY >= 0 && newY < rows && map[newY][newX] === 0) {
+    player.x = newX;
+    player.y = newY;
+    offsetX = player.x * tileSize - width / 2 + tileSize / 2;
+    offsetY = player.y * tileSize - height / 2 + tileSize / 2;
+    offsetX = constrain(offsetX, 0, cols * tileSize - width);
+    offsetY = constrain(offsetY, 0, rows * tileSize - height);
+  }
+}
+    `, -1);
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+          gtag("event", "click", {
+        "event_category": "button",
+        "event_label": "myButton",
+        "value": 1
+    });
+      const code = editor.getValue();
+      const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+      window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
