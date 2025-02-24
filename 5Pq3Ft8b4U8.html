@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js Example002</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>
+</head>
+<body>
+  <script>
+let balls = [];
+let gridCount = 10;
+let margin = 20;
+let cellW, cellH;
+
+function setup() {
+  createCanvas(400, 400);
+  noStroke();
+  ellipseMode(CENTER);
+  
+  cellW = (width - 2 * margin) / gridCount;
+  cellH = (height - 2 * margin) / gridCount;
+  
+  for (let i = 0; i < gridCount; i++) {
+    for (let j = 0; j < gridCount; j++) {
+      let x = margin + i * cellW + cellW / 2;
+      let y = margin + j * cellH + cellH / 2;
+      let speedX = random(-0.05, 0.05);
+      let speedY = random(-0.05, 0.05);
+      balls.push({ x, y, offsetX: random(1000), offsetY: random(1000), speedX, speedY });
+    }
+  }
+}
+
+function draw() {
+  background(220);
+  
+  for (let ball of balls) {
+    ball.x += map(noise(ball.offsetX + frameCount * ball.speedX), 0, 1, -1, 1);
+    ball.y += map(noise(ball.offsetY + frameCount * ball.speedY), 0, 1, -1, 1);
+    let n = noise(ball.x * 0.02, ball.y * 0.02, frameCount * 0.01);
+    let d = map(n, 0, 1, 5, cellW);
+    
+    fill(100, 150, 240, 180);
+    ellipse(ball.x, ball.y, d, d);
+  }
+}
+  </script>
+  <div id="editor"></div>
+  <button id="openEditorBtn">go p5 Editor </button>  
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+    editor.setValue(`
+let balls = [];
+let gridCount = 10;
+let margin = 20;
+let cellW, cellH;
+
+function setup() {
+  createCanvas(400, 400);
+  noStroke();
+  ellipseMode(CENTER);
+  
+  cellW = (width - 2 * margin) / gridCount;
+  cellH = (height - 2 * margin) / gridCount;
+  
+  for (let i = 0; i < gridCount; i++) {
+    for (let j = 0; j < gridCount; j++) {
+      let x = margin + i * cellW + cellW / 2;
+      let y = margin + j * cellH + cellH / 2;
+      let speedX = random(-0.05, 0.05);
+      let speedY = random(-0.05, 0.05);
+      balls.push({ x, y, offsetX: random(1000), offsetY: random(1000), speedX, speedY });
+    }
+  }
+}
+
+function draw() {
+  background(220);
+  
+  for (let ball of balls) {
+    ball.x += map(noise(ball.offsetX + frameCount * ball.speedX), 0, 1, -1, 1);
+    ball.y += map(noise(ball.offsetY + frameCount * ball.speedY), 0, 1, -1, 1);
+    let n = noise(ball.x * 0.02, ball.y * 0.02, frameCount * 0.01);
+    let d = map(n, 0, 1, 5, cellW);
+    
+    fill(100, 150, 240, 180);
+    ellipse(ball.x, ball.y, d, d);
+  }
+}
+    `, -1);
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+          gtag("event", "click", {
+        "event_category": "button",
+        "event_label": "myButton",
+        "value": 1
+    });
+      const code = editor.getValue();
+      const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+      window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
