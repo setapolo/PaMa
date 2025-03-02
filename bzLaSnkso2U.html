@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js Integration of Three.js and p5.js</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head>
+<body>
+  <script>
+        let threeRenderer, scene, camera, cube;
+        let threeCanvas;
+        let threeImage; // p5.Image to store Three.js rendering
+
+        function setup() {
+            createCanvas(600, 400); // Create a regular p5.js canvas
+
+            // Setup Three.js
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 2;
+
+            let geometry = new THREE.BoxGeometry();
+            let material = new THREE.MeshNormalMaterial();
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            // Create Three.js renderer
+            threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+            threeRenderer.setSize(width, height);
+            threeCanvas = threeRenderer.domElement;
+
+            // Create a p5.js off-screen graphics buffer
+            threeImage = createGraphics(width, height);
+        }
+
+        function draw() {
+            background(0); // Set p5.js background to black
+
+            // Update Three.js animation
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+
+            // Render Three.js scene
+            threeRenderer.render(scene, camera);
+
+            // Convert Three.js WebGL rendering to p5.Image
+            createImageBitmap(threeCanvas).then((bitmap) => {
+                threeImage.drawingContext.drawImage(bitmap, 0, 0, width, height);
+            });
+
+            // Draw the Three.js rendering onto the p5.js canvas
+            image(threeImage, 0, 0);
+        }
+
+  </script>
+  <div id="editor"></div>
+  <button id="openEditorBtn">go p5 Editor </button>  
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+    editor.setValue(`
+        let threeRenderer, scene, camera, cube;
+        let threeCanvas;
+        let threeImage; // p5.Image to store Three.js rendering
+
+        function setup() {
+            createCanvas(600, 400); // Create a regular p5.js canvas
+
+            // Setup Three.js
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 2;
+
+            let geometry = new THREE.BoxGeometry();
+            let material = new THREE.MeshNormalMaterial();
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            // Create Three.js renderer
+            threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+            threeRenderer.setSize(width, height);
+            threeCanvas = threeRenderer.domElement;
+
+            // Create a p5.js off-screen graphics buffer
+            threeImage = createGraphics(width, height);
+        }
+
+        function draw() {
+            background(0); // Set p5.js background to black
+
+            // Update Three.js animation
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+
+            // Render Three.js scene
+            threeRenderer.render(scene, camera);
+
+            // Convert Three.js WebGL rendering to p5.Image
+            createImageBitmap(threeCanvas).then((bitmap) => {
+                threeImage.drawingContext.drawImage(bitmap, 0, 0, width, height);
+            });
+
+            // Draw the Three.js rendering onto the p5.js canvas
+            image(threeImage, 0, 0);
+        }
+    `, -1);
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+          gtag("event", "click", {
+        "event_category": "button",
+        "event_label": "myButton",
+        "value": 1
+    });
+      const code = editor.getValue();
+      const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+      window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
