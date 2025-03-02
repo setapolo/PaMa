@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js Example line trace</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>
+</head>
+<body>
+  <script>
+let robot;
+let path;
+
+function setup() {
+  createCanvas(600, 400);
+  path = new Path();
+  path.addPoints();
+  robot = new Robot();
+}
+
+function draw() {
+  background(220);
+  // Draw the line
+  path.display();
+  
+  // Update the pixel information
+  loadPixels();
+  
+  // Update and display the robot
+  robot.update();
+  robot.display();
+}
+
+class Path {
+  constructor() {
+    this.points = [];
+  }
+  
+  addPoints() {
+    for (let x = 50; x < width - 50; x += 10) {
+      let y = height / 2 + 30 * sin(x * 0.05);
+      this.points.push(createVector(x, y));
+    }
+  }
+  
+  display() {
+    stroke(0);
+    strokeWeight(20); // Thicken the line
+    noFill();
+    beginShape();
+    for (let p of this.points) {
+      vertex(p.x, p.y);
+    }
+    endShape();
+  }
+}
+
+class Robot {
+  constructor() {
+    this.pos = createVector(50, height / 2);
+    this.angle = 0;
+    this.speed = 0.19;  // Reduced speed
+    this.sensorOffset = 8;
+  }
+  
+  update() {
+    let leftBrightness = this.getSensorBrightness(-this.sensorOffset);
+    let rightBrightness = this.getSensorBrightness(this.sensorOffset);
+    
+    // Brightness threshold
+    let threshold = 100;
+    let leftOnLine = leftBrightness < threshold;
+    let rightOnLine = rightBrightness < threshold;
+    
+    let error = 0;
+    if (leftOnLine && !rightOnLine) {
+      error = -1;
+    } else if (rightOnLine && !leftOnLine) {
+      error = 1;
+    } else if (leftOnLine && rightOnLine) {
+      error = 0;
+    } else {
+      error = 0.5;
+    }
+    
+    let Kp = 0.05;
+    this.angle += Kp * error;
+    
+    this.pos.x += this.speed * cos(this.angle);
+    this.pos.y += this.speed * sin(this.angle);
+  }
+  
+  getSensorBrightness(offset) {
+    let sensorPos = createVector(
+      this.pos.x + offset * cos(this.angle + HALF_PI),
+      this.pos.y + offset * sin(this.angle + HALF_PI)
+    );
+    let c = get(sensorPos.x, sensorPos.y);
+    return (c[0] + c[1] + c[2]) / 3;
+  }
+  
+  display() {
+    fill(100, 200, 255);
+    noStroke();
+    ellipse(this.pos.x, this.pos.y, 20, 20);
+    
+    // Draw left sensor (red)
+    fill(255, 0, 0);
+    let leftSensor = createVector(
+      this.pos.x - this.sensorOffset * cos(this.angle + HALF_PI),
+      this.pos.y - this.sensorOffset * sin(this.angle + HALF_PI)
+    );
+    ellipse(leftSensor.x, leftSensor.y, 5, 5);
+    
+    // Draw right sensor (green)
+    fill(0, 255, 0);
+    let rightSensor = createVector(
+      this.pos.x + this.sensorOffset * cos(this.angle + HALF_PI),
+      this.pos.y + this.sensorOffset * sin(this.angle + HALF_PI)
+    );
+    ellipse(rightSensor.x, rightSensor.y, 5, 5);
+  }
+}
+
+  </script>
+  <div id="editor"></div>
+  <button id="openEditorBtn">go p5 Editor </button>  
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+    editor.setValue(`
+let robot;
+let path;
+
+function setup() {
+  createCanvas(600, 400);
+  path = new Path();
+  path.addPoints();
+  robot = new Robot();
+}
+
+function draw() {
+  background(220);
+  // Draw the line
+  path.display();
+  
+  // Update the pixel information
+  loadPixels();
+  
+  // Update and display the robot
+  robot.update();
+  robot.display();
+}
+
+class Path {
+  constructor() {
+    this.points = [];
+  }
+  
+  addPoints() {
+    for (let x = 50; x < width - 50; x += 10) {
+      let y = height / 2 + 30 * sin(x * 0.05);
+      this.points.push(createVector(x, y));
+    }
+  }
+  
+  display() {
+    stroke(0);
+    strokeWeight(20); // Thicken the line
+    noFill();
+    beginShape();
+    for (let p of this.points) {
+      vertex(p.x, p.y);
+    }
+    endShape();
+  }
+}
+
+class Robot {
+  constructor() {
+    this.pos = createVector(50, height / 2);
+    this.angle = 0;
+    this.speed = 0.19;  // Reduced speed
+    this.sensorOffset = 8;
+  }
+  
+  update() {
+    let leftBrightness = this.getSensorBrightness(-this.sensorOffset);
+    let rightBrightness = this.getSensorBrightness(this.sensorOffset);
+    
+    // Brightness threshold
+    let threshold = 100;
+    let leftOnLine = leftBrightness < threshold;
+    let rightOnLine = rightBrightness < threshold;
+    
+    let error = 0;
+    if (leftOnLine && !rightOnLine) {
+      error = -1;
+    } else if (rightOnLine && !leftOnLine) {
+      error = 1;
+    } else if (leftOnLine && rightOnLine) {
+      error = 0;
+    } else {
+      error = 0.5;
+    }
+    
+    let Kp = 0.05;
+    this.angle += Kp * error;
+    
+    this.pos.x += this.speed * cos(this.angle);
+    this.pos.y += this.speed * sin(this.angle);
+  }
+  
+  getSensorBrightness(offset) {
+    let sensorPos = createVector(
+      this.pos.x + offset * cos(this.angle + HALF_PI),
+      this.pos.y + offset * sin(this.angle + HALF_PI)
+    );
+    let c = get(sensorPos.x, sensorPos.y);
+    return (c[0] + c[1] + c[2]) / 3;
+  }
+  
+  display() {
+    fill(100, 200, 255);
+    noStroke();
+    ellipse(this.pos.x, this.pos.y, 20, 20);
+    
+    // Draw left sensor (red)
+    fill(255, 0, 0);
+    let leftSensor = createVector(
+      this.pos.x - this.sensorOffset * cos(this.angle + HALF_PI),
+      this.pos.y - this.sensorOffset * sin(this.angle + HALF_PI)
+    );
+    ellipse(leftSensor.x, leftSensor.y, 5, 5);
+    
+    // Draw right sensor (green)
+    fill(0, 255, 0);
+    let rightSensor = createVector(
+      this.pos.x + this.sensorOffset * cos(this.angle + HALF_PI),
+      this.pos.y + this.sensorOffset * sin(this.angle + HALF_PI)
+    );
+    ellipse(rightSensor.x, rightSensor.y, 5, 5);
+  }
+}
+
+    `, -1);
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+          gtag("event", "click", {
+        "event_category": "button",
+        "event_label": "myButton",
+        "value": 1
+    });
+      const code = editor.getValue();
+      const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+      window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
