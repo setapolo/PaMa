@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js 3D maze</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+   </head>
+<body>
+  <script>
+// Maze definition: a 2D array where 1 represents a wall and 0 represents a passage
+let maze = [
+  [1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1]
+];
+
+let playerPos;       // Vector storing the player's position
+let gridSize = 50;   // The size of one cell in the maze
+
+function setup() {
+  // Create a canvas in WEBGL mode for 3D drawing
+  createCanvas(600, 600, WEBGL);
+  
+  // Set the player's initial position (using maze coordinates)
+  playerPos = createVector(1, 1);
+  
+  // Initial camera setup: top-down view from above
+  // camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ)
+  camera(0, 300, 0, 0, 0, 0, 0, 0, -1);
+}
+
+function draw() {
+  // Set the background color
+  background(200);
+  
+  // Enable orbit control: allows rotating and zooming the view with mouse drag
+  orbitControl();
+
+  // Draw the maze: loop through the maze array and draw each cell
+  for (let z = 0; z < maze.length; z++) {
+    for (let x = 0; x < maze[z].length; x++) {
+      // If the cell value is 1, draw a wall
+      if (maze[z][x] === 1) {
+        push();  // Save the current transformation matrix
+        // Translate to the correct position based on the maze's center offset
+        translate((x - maze[0].length / 2) * gridSize, 0, (z - maze.length / 2) * gridSize);
+        // Draw a cube representing one maze cell
+        box(gridSize, gridSize, gridSize);
+        pop();   // Restore the transformation matrix
+      }
+    }
+  }
+  
+  // Display the player's position (as a 3D object for debugging purposes)
+  push();
+  // Translate the player's position relative to the maze center and adjust the height for display
+  translate((playerPos.x - maze[0].length / 2) * gridSize, -25, (playerPos.y - maze.length / 2) * gridSize);
+  fill(255, 0, 0); // Draw the player in red
+  sphere(10);      // Represent the player as a small sphere
+  pop();
+
+  // Switch to 2D drawing mode to display debugging text on the screen
+  push();
+  // Reset the WEBGL transformation matrix to return to the default 2D coordinate system
+  resetMatrix();
+  fill(0);         // Set text color to black
+  textSize(16);    // Set text size to 16
+  // Display the player's current position at the top left corner of the screen
+  //text("Player Position: (" + playerPos.x + ", " + playerPos.y + ")", 10, 30);
+  pop();
+}
+
+function keyPressed() {
+  // Initialize new player coordinates with the current position
+  let newX = playerPos.x;
+  let newY = playerPos.y;
+  
+  // Process movement based on arrow key input
+  if (keyCode === UP_ARROW)    newY--; // Move up
+  if (keyCode === DOWN_ARROW)  newY++; // Move down
+  if (keyCode === LEFT_ARROW)  newX--; // Move left
+  if (keyCode === RIGHT_ARROW) newX++; // Move right
+  
+  // Update the player's position only if the destination cell is not a wall (cell value is 0)
+  if (maze[newY][newX] === 0) {
+    playerPos.set(newX, newY);
+  }
+}
+  </script>
+  <div id="editor"></div>
+  <button id="openEditorBtn">go p5 Editor </button>  
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+    editor.setValue(`
+// Maze definition: a 2D array where 1 represents a wall and 0 represents a passage
+let maze = [
+  [1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 1, 0, 1, 0, 1],
+  [1, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1]
+];
+
+let playerPos;       // Vector storing the player's position
+let gridSize = 50;   // The size of one cell in the maze
+
+function setup() {
+  // Create a canvas in WEBGL mode for 3D drawing
+  createCanvas(600, 600, WEBGL);
+  
+  // Set the player's initial position (using maze coordinates)
+  playerPos = createVector(1, 1);
+  
+  // Initial camera setup: top-down view from above
+  // camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ)
+  camera(0, 300, 0, 0, 0, 0, 0, 0, -1);
+}
+
+function draw() {
+  // Set the background color
+  background(200);
+  
+  // Enable orbit control: allows rotating and zooming the view with mouse drag
+  orbitControl();
+
+  // Draw the maze: loop through the maze array and draw each cell
+  for (let z = 0; z < maze.length; z++) {
+    for (let x = 0; x < maze[z].length; x++) {
+      // If the cell value is 1, draw a wall
+      if (maze[z][x] === 1) {
+        push();  // Save the current transformation matrix
+        // Translate to the correct position based on the maze's center offset
+        translate((x - maze[0].length / 2) * gridSize, 0, (z - maze.length / 2) * gridSize);
+        // Draw a cube representing one maze cell
+        box(gridSize, gridSize, gridSize);
+        pop();   // Restore the transformation matrix
+      }
+    }
+  }
+  
+  // Display the player's position (as a 3D object for debugging purposes)
+  push();
+  // Translate the player's position relative to the maze center and adjust the height for display
+  translate((playerPos.x - maze[0].length / 2) * gridSize, -25, (playerPos.y - maze.length / 2) * gridSize);
+  fill(255, 0, 0); // Draw the player in red
+  sphere(10);      // Represent the player as a small sphere
+  pop();
+
+  // Switch to 2D drawing mode to display debugging text on the screen
+  push();
+  // Reset the WEBGL transformation matrix to return to the default 2D coordinate system
+  resetMatrix();
+  fill(0);         // Set text color to black
+  textSize(16);    // Set text size to 16
+  // Display the player's current position at the top left corner of the screen
+  //text("Player Position: (" + playerPos.x + ", " + playerPos.y + ")", 10, 30);
+  pop();
+}
+
+function keyPressed() {
+  // Initialize new player coordinates with the current position
+  let newX = playerPos.x;
+  let newY = playerPos.y;
+  
+  // Process movement based on arrow key input
+  if (keyCode === UP_ARROW)    newY--; // Move up
+  if (keyCode === DOWN_ARROW)  newY++; // Move down
+  if (keyCode === LEFT_ARROW)  newX--; // Move left
+  if (keyCode === RIGHT_ARROW) newX++; // Move right
+  
+  // Update the player's position only if the destination cell is not a wall (cell value is 0)
+  if (maze[newY][newX] === 0) {
+    playerPos.set(newX, newY);
+  }
+}
+    `, -1);
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+          gtag("event", "click", {
+        "event_category": "button",
+        "event_label": "myButton",
+        "value": 1
+    });
+      const code = editor.getValue();
+      const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+      window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
