@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>three.js BufferGeometry</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+   </head>
+<body>
+  <script>
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create a BufferGeometry object
+        const geometry = new THREE.BufferGeometry();
+
+        // Define vertex data (3 vertices forming a triangle)
+        const vertices = new Float32Array([
+            -0.5, -0.5, 0.0,  // Vertex 1 (x, y, z)
+             0.5, -0.5, 0.0,  // Vertex 2 (x, y, z)
+             0.0,  0.5, 0.0   // Vertex 3 (x, y, z)
+        ]);
+
+        // Assign the vertex buffer to the geometry
+        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+
+        // Create a material (wireframe mode for visualization)
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+
+        // Create a mesh and add it to the scene
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // Set the camera position
+        camera.position.z = 2;
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            mesh.rotation.y += 0.01; // Rotate the triangle on the Y-axis
+            renderer.render(scene, camera);
+        }
+
+        animate();
+  </script>
+  <div id="editor"></div>
+  <button id="openEditorBtn">go p5 Editor </button>  
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+    editor.setValue(`
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create a BufferGeometry object
+        const geometry = new THREE.BufferGeometry();
+
+        // Define vertex data (3 vertices forming a triangle)
+        const vertices = new Float32Array([
+            -0.5, -0.5, 0.0,  // Vertex 1 (x, y, z)
+             0.5, -0.5, 0.0,  // Vertex 2 (x, y, z)
+             0.0,  0.5, 0.0   // Vertex 3 (x, y, z)
+        ]);
+
+        // Assign the vertex buffer to the geometry
+        geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+
+        // Create a material (wireframe mode for visualization)
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+
+        // Create a mesh and add it to the scene
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // Set the camera position
+        camera.position.z = 2;
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            mesh.rotation.y += 0.01; // Rotate the triangle on the Y-axis
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+    `, -1);
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+          gtag("event", "click", {
+        "event_category": "button",
+        "event_label": "myButton",
+        "value": 1
+    });
+      const code = editor.getValue();
+      const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+      window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
