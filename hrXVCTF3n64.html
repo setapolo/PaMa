@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js 3d ball</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>   
+   </head>
+<body>
+  <script id="src001">
+let ball = {
+  pos: { x: 0, y: 20, z: 0 },
+  vel: { x: 0, y: 0, z: 0 },
+  radius: 20,
+  angle: 0  // rotation angle
+};
+
+function setup() {
+  createCanvas(windowWidth, windowHeight, WEBGL);
+  noStroke();
+}
+
+function draw() {
+  background(200);
+  
+  // Camera control (change view by dragging the mouse)
+  orbitControl();
+  
+  // Lighting
+  ambientLight(150);
+  directionalLight(255, 255, 255, 0, -1, 0);
+  
+  // Draw the floor (XZ plane)
+  push();
+    rotateX(HALF_PI);
+    fill(150);
+    plane(1000, 1000);
+  pop();
+  
+  // Add acceleration based on key input
+  let acceleration = 0.2;
+  if (keyIsDown(LEFT_ARROW)) {
+    ball.vel.x -= acceleration;
+  }
+  if (keyIsDown(RIGHT_ARROW)) {
+    ball.vel.x += acceleration;
+  }
+  if (keyIsDown(UP_ARROW)) {
+    ball.vel.z -= acceleration;
+  }
+  if (keyIsDown(DOWN_ARROW)) {
+    ball.vel.z += acceleration;
+  }
+  
+  // Update position
+  ball.pos.x += ball.vel.x;
+  ball.pos.z += ball.vel.z;
+  
+  // Apply friction to reduce velocity
+  ball.vel.x *= 0.95;
+  ball.vel.z *= 0.95;
+  
+  // Update rotation angle based on the displacement
+  let displacement = sqrt(ball.vel.x * ball.vel.x + ball.vel.z * ball.vel.z);
+  ball.angle += displacement / ball.radius;
+  
+  // Draw the ball
+  push();
+    // Position the ball on the floor (y position raised by the ball's radius)
+    translate(ball.pos.x, ball.radius, ball.pos.z);
+    
+    // Calculate the rolling axis based on the ball's movement direction
+    let velVec = createVector(ball.vel.x, 0, ball.vel.z);
+    if (velVec.mag() > 0.001) {
+      // The cross product of the upward vector (0,1,0) and the velocity vector yields the rolling axis
+      let axis = createVector(velVec.z, 0, -velVec.x);
+      axis.normalize();
+      rotate(ball.angle, axis);
+    }
+    
+    fill(255, 0, 0);
+    sphere(ball.radius);
+  pop();
+}
+
+
+  </script>
+
+  <button id="openEditorBtn">go p5 Editor </button>    <div id="editor"></div>
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+
+    // src001 の内容を取得してエディタにセット
+    const srcCode = document.getElementById("src001").textContent;
+    editor.setValue(srcCode.trim(), -1);
+
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+        gtag("event", "click", {
+            "event_category": "button",
+            "event_label": "myButton",
+            "value": 1
+        });
+
+        const code = editor.getValue();
+        const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+        window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
