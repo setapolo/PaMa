@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js parametric particle motion</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>   
+   </head>
+<body>
+  <script id="src001">
+let particles = [];
+
+function setup() {
+  createCanvas(600, 400);
+  for (let i = 0; i < 150; i++) { // Reduce the number of particles so larger ones are more visible
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  background(0, 50); // Creates a trailing effect for smooth motion
+  translate(width / 2, height / 2); // Set the center as the origin
+
+  for (let p of particles) {
+    p.update();
+    p.display();
+  }
+}
+
+class Particle {
+  constructor() {
+    this.angle = random(TWO_PI); // Initial angle
+    this.radius = random(50, 250); // Random initial distance from the center
+    this.size = random(5, 40); // Size variation (small to large particles)
+    this.speed = random(0.3, 1.2); // Speed of radial movement
+    this.angleVel = random(0.0005, 0.005); // Very slow rotation to minimize circular motion
+    this.noiseOffset = random(1000); // Initial offset for Perlin noise
+    this.color = color(random(100, 255), random(100, 255), random(50, 200));
+    this.shapeType = random([0, 1]); // 0: Circle, 1: Square
+  }
+
+  update() {
+    this.angle += this.angleVel; // Slowly rotate
+    let noiseFactor = noise(this.noiseOffset) * 2 - 1; // Generate noise (-1 to 1 range)
+    this.radius += noiseFactor * this.speed * 2; // Apply noise for irregular movement
+    this.noiseOffset += 0.003; // Increment noise offset for smooth randomness
+  }
+
+  display() {
+    fill(this.color);
+    noStroke();
+    let x = cos(this.angle) * this.radius;
+    let y = sin(this.angle) * this.radius;
+
+    if (this.shapeType === 0) {
+      ellipse(x, y, this.size); // Draw a circle
+    } else {
+      rectMode(CENTER);
+      rect(x, y, this.size, this.size); // Draw a square
+    }
+  }
+}
+
+
+  </script>
+
+  <button id="openEditorBtn">go p5 Editor </button>    <div id="editor"></div>
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+
+    // src001 の内容を取得してエディタにセット
+    const srcCode = document.getElementById("src001").textContent;
+    editor.setValue(srcCode.trim(), -1);
+
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+        gtag("event", "click", {
+            "event_category": "button",
+            "event_label": "myButton",
+            "value": 1
+        });
+
+        const code = editor.getValue();
+        const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+        window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
