@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js 3d ball</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>   
+   </head>
+<body>
+  <script id="src001">
+// Nethack-style Scrolling Movement Demo (p5.js)
+let tileSize = 32;
+let screenWidth = 16;  // Number of tiles horizontally per screen
+let screenHeight = 12; // Number of tiles vertically per screen
+let mapWidth = screenWidth * 2;  // Map width (4 screen sizes)
+let mapHeight = screenHeight * 2; // Map height (4 screen sizes)
+
+let player = { x: screenWidth * tileSize / 2, y: screenHeight * tileSize / 2 };
+let camera = { x: 0, y: 0 };
+
+let map = [];
+
+function setup() {
+  createCanvas(screenWidth * tileSize, screenHeight * tileSize);
+  generateMap();
+}
+
+function draw() {
+  background(0);
+  
+  push();
+  translate(-camera.x, -camera.y);
+  drawMap();
+  drawPlayer();
+  pop();
+}
+
+function generateMap() {
+  for (let y = 0; y < mapHeight; y++) {
+    map[y] = [];
+    for (let x = 0; x < mapWidth; x++) {
+      map[y][x] = random() < 0.2 ? 1 : 0; // 20% chance of being a wall
+    }
+  }
+}
+
+function drawMap() {
+  for (let y = 0; y < mapHeight; y++) {
+    for (let x = 0; x < mapWidth; x++) {
+      if (map[y][x] === 1) {
+        fill(100);
+      } else {
+        fill(50);
+      }
+      rect(x * tileSize, y * tileSize, tileSize, tileSize);
+    }
+  }
+}
+
+function drawPlayer() {
+  fill(255, 0, 0);
+  rect(player.x, player.y, tileSize, tileSize);
+}
+
+function keyPressed() {
+  let newX = player.x;
+  let newY = player.y;
+
+  if (keyCode === LEFT_ARROW) newX -= tileSize;
+  if (keyCode === RIGHT_ARROW) newX += tileSize;
+  if (keyCode === UP_ARROW) newY -= tileSize;
+  if (keyCode === DOWN_ARROW) newY += tileSize;
+
+  let tileX = Math.floor(newX / tileSize);
+  let tileY = Math.floor(newY / tileSize);
+
+  if (tileX >= 0 && tileX < mapWidth && tileY >= 0 && tileY < mapHeight && map[tileY][tileX] === 0) {
+    player.x = newX;
+    player.y = newY;
+  }
+
+  updateCamera();
+}
+
+function updateCamera() {
+  camera.x = constrain(player.x - width / 2, 0, (mapWidth - screenWidth) * tileSize);
+  camera.y = constrain(player.y - height / 2, 0, (mapHeight - screenHeight) * tileSize);
+}
+
+
+  </script>
+
+  <button id="openEditorBtn">go p5 Editor </button>    <div id="editor"></div>
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+
+    const srcCode = document.getElementById("src001").textContent;
+    editor.setValue(srcCode.trim(), -1);
+
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+        gtag("event", "click", {
+            "event_category": "button",
+            "event_label": "myButton",
+            "value": 1
+        });
+
+        const code = editor.getValue();
+        const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+        window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
