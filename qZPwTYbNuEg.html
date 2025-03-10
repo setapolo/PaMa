@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>  <style>    
+  #defaultCanvas0 {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+    }
+    body { font-family: sans-serif; }
+    #editor { width:600px; height:300px; border:1px solid #ccc; margin-bottom: 10px;top:500px; }
+    #openEditorBtn {position: absolute; top:450px; }
+  </style>
+  <meta charset="UTF-8">
+  <title>p5.js cueBall </title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.3/ace.js"></script>   
+   </head>
+<body>
+  <script id="src001">
+let balls = [];
+let cueBall;
+let cueStick;
+let isAiming = false;
+let aimStart;
+
+function setup() {
+  createCanvas(800, 400);
+  cueBall = new Ball(width / 4, height / 2, 10, true);
+  balls.push(cueBall);
+  for (let i = 0; i < 5; i++) {
+    balls.push(new Ball(width / 2 + i * 22, height / 2 + i * 10, 10, false));
+  }
+}
+
+function draw() {
+  background(0, 100, 0);
+  for (let ball of balls) {
+    ball.update();
+    ball.display();
+  }
+  handleCollisions();
+  
+  if (isAiming) {
+    stroke(255);
+    line(cueBall.pos.x, cueBall.pos.y, mouseX, mouseY);
+  }
+}
+
+function mousePressed() {
+  if (cueBall.isStopped()) {
+    isAiming = true;
+    aimStart = createVector(mouseX, mouseY);
+  }
+}
+
+function mouseReleased() {
+  if (isAiming) {
+    let force = p5.Vector.sub(aimStart, createVector(mouseX, mouseY)).mult(0.1);
+    cueBall.applyForce(force);
+    isAiming = false;
+  }
+}
+
+class Ball {
+  constructor(x, y, r, isCue) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(0, 0);
+    this.r = r;
+    this.isCue = isCue;
+  }
+
+  update() {
+    this.pos.add(this.vel);
+    this.vel.mult(0.98);
+    this.checkEdges();
+  }
+
+  checkEdges() {
+    if (this.pos.x - this.r < 0 || this.pos.x + this.r > width) {
+      this.vel.x *= -1;
+    }
+    if (this.pos.y - this.r < 0 || this.pos.y + this.r > height) {
+      this.vel.y *= -1;
+    }
+  }
+
+  display() {
+    fill(this.isCue ? color(255, 0, 0) : color(255, 204, 0));
+    ellipse(this.pos.x, this.pos.y, this.r * 2);
+  }
+
+  applyForce(force) {
+    this.vel.add(force);
+  }
+
+  isStopped() {
+    return this.vel.mag() < 0.1;
+  }
+}
+
+function handleCollisions() {
+  for (let i = 0; i < balls.length; i++) {
+    for (let j = i + 1; j < balls.length; j++) {
+      let b1 = balls[i];
+      let b2 = balls[j];
+      let distSq = (b1.pos.x - b2.pos.x) ** 2 + (b1.pos.y - b2.pos.y) ** 2;
+      let minDist = (b1.r + b2.r) ** 2;
+      if (distSq < minDist) {
+        let normal = p5.Vector.sub(b2.pos, b1.pos).normalize();
+        let relativeVel = p5.Vector.sub(b1.vel, b2.vel);
+        let speed = relativeVel.dot(normal);
+        if (speed < 0) continue;
+        let impulse = normal.mult(speed);
+        b1.vel.sub(impulse);
+        b2.vel.add(impulse);
+      }
+    }
+  }
+}
+
+  </script>
+
+  <button id="openEditorBtn">go p5 Editor </button>    <div id="editor"></div>
+  <script>
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+
+    const srcCode = document.getElementById("src001").textContent;
+    editor.setValue(srcCode.trim(), -1);
+
+    document.getElementById("openEditorBtn").addEventListener("click", function() {
+        gtag("event", "click", {
+            "event_category": "button",
+            "event_label": "myButton",
+            "value": 1
+        });
+
+        const code = editor.getValue();
+        const url = "https://editor.p5js.org/?code=" + encodeURIComponent(code);
+        window.open(url, '_blank');
+    });
+  </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script></body>
+</html>
