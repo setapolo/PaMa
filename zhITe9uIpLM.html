@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rundll32.exe - Tips of the Week</title>
+    <script>
+        let player;
+        let videoIndex = 0;
+        const videos = [
+            { id: "z9tECKZ60zk", description: "This video is a YouTube API demo." },
+            { id: "dRokdqRtles", description: "This is the famous Rickroll video." },
+            { id: "btyhpyJTyXg", description: "This is the famous Rickroll video." },
+            { id: "-2OyL6EA5Sc", description: "This is the famous Rickroll video." },
+            { id: "f4axTBf9CWY", description: "This is the famous Rickroll video." },
+        ];
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player("player", {
+                height: "360",
+                width: "640",
+                videoId: videos[videoIndex].id,
+                playerVars: { 'autoplay': 1, 'mute': 1 },
+                events: {
+                    "onReady": onPlayerReady,
+                    "onStateChange": onPlayerStateChange
+                }
+            });
+            updatePlaylistDisplay();
+        }
+
+        function onPlayerReady(event) {
+            event.target.playVideo();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                setTimeout(nextVideo, 1000);
+            }
+        }
+
+        function nextVideo() {
+            videoIndex = (videoIndex + 1) % videos.length;
+            player.loadVideoById(videos[videoIndex].id);
+            updatePlaylistDisplay();
+        }
+
+        function updatePlaylistDisplay() {
+            document.getElementById("description").innerText = videos[videoIndex].description;
+            let rows = document.querySelectorAll("#playlistTable tbody tr");
+            rows.forEach((row, index) => {
+                row.style.backgroundColor = index === videoIndex ? "#FFD700" : "white";
+            });
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        #player {
+            flex: 1;
+            max-width: 640px;
+        }
+
+        .sponsored {
+            flex: 0.5;
+            text-align: center;
+        }
+
+        .sponsored img {
+            width: 100%;
+            max-width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .sponsored p {
+            font-size: 14px;
+            color: #333;
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    h1 { color: #333; }
+    .tip {
+      background: white;
+      border-left: 6px solid #4CAF50;
+      padding: 1em;
+      margin-bottom: 1.5em;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    code {
+      background: #eee;
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 0.5em;
+    }
+    button.copy-btn {
+      padding: 4px 8px;
+      font-size: 0.9em;
+      cursor: pointer;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 4px;
+    }
+    button.copy-btn:hover {
+      background-color: #45a049;
+    }        
+    </style>
+</head>
+<body>
+    <h1>rundll32.exe - Tips of the Week</h1>
+
+    <div id="container">
+        <div id="player"></div>
+        <div class="sponsored">
+            <a href="https://geni.us/AqXmYbX" target="_blank" onClick="gtag('event', 'click', {
+  'event_category': 'リンク',
+  'event_label': 'Exampleリンク'
+});">
+                <img src="https://m.media-amazon.com/images/I/71iMOU+wNoL._SY522_.jpg" alt="Sponsored Product">
+            </a>
+            <p>Sponsored by Amazon</p>
+        </div>
+    </div>
+
+    <p id="description"></p>
+  <h1>rundll32.exe - Tips of the Week</h1>
+
+  <div class="tip">
+    <h2>1. Open Add/Remove Programs</h2>
+    <p><code id="cmd1">rundll32.exe shell32.dll,Control_RunDLL appwiz.cpl</code>
+    <button class="copy-btn" onclick="copyToClipboard('cmd1')">Copy</button></p>
+  </div>
+
+  <div class="tip">
+    <h2>2. Open Display Settings</h2>
+    <p><code id="cmd2">rundll32.exe shell32.dll,Control_RunDLL desk.cpl</code>
+    <button class="copy-btn" onclick="copyToClipboard('cmd2')">Copy</button></p>
+  </div>
+
+  <div class="tip">
+    <h2>3. Turn Off the Monitor</h2>
+    <p><code id="cmd3">rundll32.exe user32.dll,SendMessageA 0xffff 0x112 0xf170 2</code>
+    <button class="copy-btn" onclick="copyToClipboard('cmd3')">Copy</button></p>
+  </div>
+
+  <div class="tip">
+    <h2>4. Open "Safely Remove Hardware"</h2>
+    <p><code id="cmd4">rundll32.exe shell32.dll,Control_RunDLL hotplug.dll</code>
+    <button class="copy-btn" onclick="copyToClipboard('cmd4')">Copy</button></p>
+  </div>
+
+  <div class="tip">
+    <h2>5. Open Internet Settings</h2>
+    <p><code id="cmd5">rundll32.exe shell32.dll,Control_RunDLL inetcpl.cpl</code>
+    <button class="copy-btn" onclick="copyToClipboard('cmd5')">Copy</button></p>
+  </div>
+
+  <script>
+    function copyToClipboard(id) {
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        gtag('event', 'click', {
+          'event_category': 'clipboard',
+          'event_label': 'clipboard'
+        });
+        alert("Copied to clipboard!");
+      }, err => {
+        alert("Failed to copy.");
+      });
+    }
+  </script>
+    <table id="playlistTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Video ID</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>z9tECKZ60zk</td><td>Merry Christmas Mr.Lawrence</td></tr>
+            <tr><td>2</td><td>dRokdqRtles</td><td>Tong Poo</td></tr>
+            <tr><td>3</td><td>btyhpyJTyXg</td><td>Energy Flow</td></tr>
+            <tr><td>4</td><td>-2OyL6EA5Sc</td><td>Self Portrait</td></tr>
+            <tr><td>5</td><td>f4axTBf9CWY</td><td>The Last Emperor</td></tr>
+        </tbody>
+    </table>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+    </script>
+</body>
+</html>
