@@ -1,0 +1,973 @@
+<!doctype html public "-//W3C//DTD HTML 4.0//EN">
+
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Redcode 入門ガイド（初心者向け）, v1.23（日本語訳）</title>
+  <style type="text/css"><!--
+.op { color: #3388dd; }
+.mod { color: #2222cc; }
+.addr { color: #ff5533; }
+.pseudo { color: #33bb11; }
+.ellipsis { color: #777777; }
+.comment { color: #770000; }
+.rcline { color: #ff0000; }
+.metakey { color: #ff0000; }
+.metaval { color: #770000; }
+.assert { color: #9900ff; }
+HTML, BODY { background: #ffffff; }
+PRE { border: 1px dashed #3366dd; background: #f7f7f7; margin-left: min(40px, 3%); margin-right: min(30px, 2%); padding: 4px; overflow-x: auto;}
+.moved { border: 1px solid #ff0000; color: #aa0000; padding: 6px; }
+.prog1 { color: #cc0000; }
+.prog2 { color: #009900; }
+
+@media(prefers-color-scheme: dark) {
+HTML, BODY { background: #000000; color: #ffffff; }
+PRE { background: #101010; }
+.comment { color: #aa0000; }
+.metaval { color: #aa0000; }
+}
+
+  --></style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+  <h1>Redcode 入門ガイド（初心者向け）</h1>
+
+  <p>バージョン 1.23</p>
+
+  <hr>
+
+  <h2><a name="contents">目次</a></h2>
+
+  <ul>
+    <li><a href="#contents">目次</a></li>
+    <li><a href="#preface">はじめに（Preface）</a></li>
+    <li><a href="#introduction">Core War 入門</a><ul>
+      <li><a href="#intro_what">Core War とは？</a></li>
+      <li><a href="#intro_how">どう動くのか？</a></li>
+    </ul></li>
+    <li><a href="#starting">Redcode を始める</a><ul>
+      <li><a href="#start_instr">Redcode の命令セット</a></li>
+      <li><a href="#start_imp">Imp（インプ）</a></li>
+      <li><a href="#start_dwarf">Dwarf（ドワーフ）</a></li>
+      <li><a href="#start_modes">アドレッシングモード</a></li>
+      <li><a href="#start_queue">プロセスキュー</a></li>
+      <li><a href="#start_modif">命令修飾子（modifier）</a></li>
+    </ul></li>
+    <li><a href="#deeper">’94 標準をもう少し深く</a><ul>
+      <li><a href="#deep_imm"># は見た目以上の意味がある…</a></li>
+      <li><a href="#deep_math">剰余（モジュロ）計算</a></li>
+      <li><a href="#deep_instr">’94 標準の命令を 1 つずつ</a></li>
+      <li><a href="#deep_space">P-space &mdash; 最後のフロンティア</a></li>
+    </ul></li>
+    <li><a href="#parser">パーサ（アセンブラ）</a><ul>
+      <li><a href="#parse_label">ラベルとアドレス</a></li>
+      <li><a href="#parse_whole">全体像</a></li>
+      <li><a href="#parse_ass">環境と ;assert</a></li>
+      <li><a href="#parse_equ">#define？ まあ、ほぼそれ…</a></li>
+      <li><a href="#parse_for">"rof" は何のため？</a></li>
+      <li><a href="#parse_var">変数でバリエーション</a></li>
+      <li><a href="#parse_pin">PIN と針の穴</a></li>
+      <li><a href="#parse_hill">丘に登る（KotH）</a></li>
+    </ul></li>
+    <li><a href="#history">更新履歴</a></li>
+    <li><a href="#copyright">著作権</a></li>
+  </ul>
+
+  <hr>
+
+  <h2><a name="preface">はじめに（Preface）</a></h2>
+
+  <p>最近は Core War というゲームに興味を持つ初心者が、あまり多くありません。もちろん、これは自然なことです。アセンブリコードの最適化を楽しいと感じる人は、そもそも多くないからです。しかし、出発点の敷居が高い理由の 1 つに、「ゲームの基本中の基本」についての情報が見つけにくいこともあります。良い文書は多く存在しますが、技術的すぎる、古い、探しにくい、あるいは不完全といった問題が起こりがちです。</p>
+
+  <p>そこで私はこのガイドを書くことにしました。目的は、Core War と Redcode に初めて触れる人を、動く（勝てなくてもよい）ウォリアーを書けるところまで案内し、さらに技術的な資料へ進めるようにすることです。</p>
+
+  <p>正直に言えば、私自身もまだこのゲームの初心者です。言語についてはかなり理解していますが、本当に成功したウォリアーをまだ作れていません。ただ、経験を積むまで待つのではなく、「新規プレイヤーとして、ゲームの癖を理解しようとして苦労する感覚」を鮮明に覚えているうちに、できるだけ早く書くことにしました。</p>
+
+  <p>このガイドは <em>本当に</em> 初心者向けです。アセンブリ言語（あるいはプログラミング一般）の知識は不要で、概念をうっすら知っている程度なら用語理解の助けになります。Redcode（特に現代の仕様）は見た目こそアセンブリ風ですが、多くの点でより抽象的で、他のアセンブリ言語とは細部がかなり異なります。</p>
+
+  <p>このガイドで扱う Redcode は（概ね）現在の <i>de facto</i> 標準である ICWS ’94 Standard Draft に pMARS 0.8 拡張を加えたものです。（HTML に対する Netscape 拡張のようなものです…うーん…。幸い、Microsoft Corewar Simulator はまだありません。市場が小さすぎると思っているのでしょう。）古い ’88 標準についても軽く触れますが、中心は ’94 標準です。’88 を学びたい人向けのチュートリアルは Web にたくさんあります。</p>
+
+  <p><strong>重要</strong>：Redcode（あるいはどんなプログラミング言語でも）を、完全に直線的な順序で教える簡単な方法はありません。このガイドも、ある程度は筋の通った順序に整理しましたが、<em>飛び飛びに読んでも全く構いません</em>。そのための <a href="#contents">目次</a> です。</p>
+
+  <p>全体の整合性を保つために、先に例を見せてから数章後で説明する、という構成がしばしば登場します。理解しにくい点があれば、少し先まで読み進めてください。それでも分からなければ、別の章で説明されていないか探してみてください。</p>
+
+  <p>学び方は人それぞれなので、あなたが選ぶ読み順は、私が選んだ順序より良い可能性があります。ただし、退屈だからと完全に読み飛ばすと、重要な情報を取り逃がすことがあります。重要な箇所には <em>強調</em> を付けるよう努めました。とはいえ、すべてを逐一書き切ると、このガイドは長くなりすぎて読めなくなります。できるだけ丁寧に読んでください。</p>
+
+  <hr>
+
+  <h2><a name="introduction">Core War 入門</a></h2>
+
+  <h3><a name="intro_what">Core War とは？</a></h3>
+
+  <p><dfn>Core War</dfn>（または <dfn>Core Wars</dfn>）は、シミュレートされたコンピュータのメモリ上で、アセンブリプログラム同士が互いを破壊し合うプログラミングゲームです。プログラム（<dfn>warriors</dfn>＝ウォリアー）は <dfn>Redcode</dfn> という特別な言語で書かれ、<dfn>MARS</dfn>（<dfn>Memory Array Redcode Simulator</dfn>）という実行環境で動作します。</p>
+
+  <p>Redcode と MARS の環境は、普通のコンピュータシステムに比べて大きく単純化され、抽象化されています。これは良いことです。Core War のプログラムは可読性ではなく性能のために書かれます。もし通常のアセンブリ言語を使うゲームだったら、世界で 2〜3 人しか「効果的で丈夫な」ウォリアーを書けず、しかも本人たちですら完全には理解できないかもしれません。可能性は大きいものの、そこそこに到達するだけでも何年もかかるでしょう。</p>
+
+  <h3><a name="intro_how">どう動くのか？</a></h3>
+
+  <p>プログラムが走るシステムはとても単純です。<dfn>core</dfn>（シミュレートされたコンピュータのメモリ）は連続した命令の配列で、競技プログラム以外は空です。core は環状に繋がっており、最後の命令の次は最初の命令に戻ります。</p>
+
+  <p>実際、プログラムは core の終端を知る手段がありません。絶対アドレスが存在しないからです。つまり、アドレス 0 は「メモリの最初の命令」ではなく、「そのアドレスを含む命令自身」を意味します。次の命令は 1、前の命令は -1 です。</p>
+
+  <p>ご覧の通り、Core War のメモリの基本単位は通常の 1 バイトではなく「1 命令」です。各 Redcode 命令は 3 つの部分からなります。<dfn>OpCode</dfn>（命令そのもの）、ソースアドレス（別名 <dfn>A-field</dfn>）、デスティネーションアドレス（<dfn>B-field</dfn>）です。A-field と B-field の間でデータを移すことも可能ですが、基本的には命令を分割不能なブロックとして扱う必要があります。</p>
+
+  <p>実行も同様に単純です。MARS は 1 サイクルに 1 命令を実行し、命令が別アドレスへのジャンプを指示しない限り次の命令へ進みます。複数のプログラムが走る場合（通常そうです）、各プログラムは交互に 1 命令ずつ実行されます。<code class=op>MOV</code> でも <code class=op>DIV</code> でも、プロセスを殺す <code class=op>DAT</code> ですら、実行時間は等しく 1 サイクルです。</p>
+
+  <hr>
+
+  <h2><a name="starting">Redcode を始める</a></h2>
+
+  <h3><a name="start_instr">Redcode の命令セット</a></h3>
+
+  <p>Redcode の命令数は標準が新しくなるたびに増え、最初は 5 つ程度だったものが、現在は 18 か 19 になりました。しかも修飾子とアドレッシングモードが増え、組み合わせは文字通り数百になります。とはいえ、全部を暗記する必要はありません。命令と、修飾子がどう作用を変えるかを覚えれば十分です。</p>
+
+  <p>Redcode で使われる命令の一覧です：</p>
+
+  <ul>
+    <li><code class=op>DAT</code> &mdash; data（データ。実行するとプロセスを殺す）</li>
+
+    <li><code class=op>MOV</code> &mdash; move（あるアドレスから別アドレスへコピー）</li>
+
+    <li><code class=op>ADD</code> &mdash; add（加算）</li>
+
+    <li><code class=op>SUB</code> &mdash; subtract（減算）</li>
+
+    <li><code class=op>MUL</code> &mdash; multiply（乗算）</li>
+
+    <li><code class=op>DIV</code> &mdash; divide（除算）</li>
+
+    <li><code class=op>MOD</code> &mdash; modulus（剰余。割って余りを得る）</li>
+
+    <li><code class=op>JMP</code> &mdash; jump（別アドレスへ制御移動）</li>
+
+    <li><code class=op>JMZ</code> &mdash; jump if zero（値を調べ、0 ならジャンプ）</li>
+
+    <li><code class=op>JMN</code> &mdash; jump if not zero（0 でなければジャンプ）</li>
+
+    <li><code class=op>DJN</code> &mdash; decrement and jump if not zero（1 減算し、結果が 0 でなければジャンプ）</li>
+
+    <li><code class=op>SPL</code> &mdash; split（別アドレスで第 2 のプロセスを開始）</li>
+
+    <li><code class=op>CMP</code> &mdash; compare（<code class=op>SEQ</code> と同義）</li>
+
+    <li><code class=op>SEQ</code> &mdash; skip if equal（2 命令を比較し、等しければ次命令をスキップ）</li>
+
+    <li><code class=op>SNE</code> &mdash; skip if not equal（等しくなければ次命令をスキップ）</li>
+
+    <li><code class=op>SLT</code> &mdash; skip if lower than（2 値を比較し、<em>第 1</em> が <em>第 2</em> より小さければ次命令をスキップ）</li>
+
+    <li><code class=op>LDP</code> &mdash; load from p-space（プライベート領域から読み込む）</li>
+
+    <li><code class=op>STP</code> &mdash; save to p-space（プライベート領域に書き込む）</li>
+
+    <li><code class=op>NOP</code> &mdash; no operation（何もしない）</li>
+  </ul>
+
+  <p>いくつかが（控えめに言って）妙に見えても心配しないでください。Redcode は抽象的なので、一般的なアセンブリ言語とはかなり違います。</p>
+
+  <h3><a name="start_imp">Imp（インプ）</a></h3>
+
+  <p>真実として、Redcode でいちばん重要な部分は、いちばん簡単な部分です。基本的なウォリアーの多くは、新しい命令やモードが登場する前に発明されました。最も単純で、おそらく最初の Core War プログラムは <dfn>Imp</dfn> です。A. K. Dewdney が 1984 年の Scientific American の記事で Core War を一般に紹介した際に掲載されました。</p>
+
+  <pre>
+        <span class=op>MOV</span> 0, 1</pre>
+
+  <p>はい、これだけです。たった 1 つの <code class=op>MOV</code>。では、これは何を <em>する</em> のでしょうか？ <code class=op>MOV</code> は命令をコピーします。Core War のアドレスは現在命令からの相対なので、Imp は自分自身を「自分の直後の命令」にコピーします。</p>
+
+  <pre>
+        <span class=op>MOV</span> 0, 1         <span class=comment>; いま実行した行</span>
+        <span class=op>MOV</span> 0, 1         <span class=comment>; 次に実行される行</span></pre>
+
+  <p>Imp は、いま書いた命令を次に実行します。全く同じ命令なので、また 1 命令先へ自分をコピーし、そのコピーを実行し…という動きを繰り返し、core を <code class=op>MOV</code> で埋めながら前進します。core には終端がないので、全域を埋めた後は起点に戻り、<i>ad infinitum</i>（永遠に）ぐるぐる回り続けます。</p>
+
+  <p>つまり Imp は、実行しながら自分のコードを生成します！ Core War では自己書き換えは例外ではなくルールです。勝つには効率が必要で、ほぼ必ず「その場でコードを変える」ことになります。抽象化された環境のおかげで、通常のアセンブリより追いやすいのが救いです。</p>
+
+  <p>ちなみに、Core War にキャッシュはありません。まあ正確には、<em>現在</em> 実行中の命令だけはキャッシュされるので、実行の <em>途中</em> でそれを変えることはできませんが、その話は後にしましょう…。</p>
+
+  <h3><a name="start_dwarf">Dwarf（ドワーフ）</a></h3>
+
+  <p>Imp にはウォリアーとして小さな欠点があります。勝ちにくいのです。相手を上書きしても、相手も <code class=op>MOV</code><code> 0, 1</code> を実行し始めてインプ化し、引き分けになりがちです。相手を殺すには <code class=op>DAT</code> を相手コードにコピーする必要があります。</p>
+
+  <p>そこで Dewdney の別の古典ウォリアー <dfn>Dwarf</dfn>（ドワーフ）が登場します。これは core を一定間隔で <code class=op>DAT</code> で「爆撃」し、自分に当たらないようにしながら相手を殺します。</p>
+
+  <pre>
+        <span class=op>ADD</span> <span class=addr>#</span>4, 3        <span class=comment>; ここから実行開始</span>
+        <span class=op>MOV</span> 2, <span class=addr>@</span>2
+        <span class=op>JMP</span> -2
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>0</pre>
+
+  <p>これは Dewdney の原文と寸分違わずではありませんが、動きは同じです。実行は先頭命令から始まります。最初は <code class=op>ADD</code> です。<code class=op>ADD</code> はソースとデスティネーションを足し、結果をデスティネーションへ置きます。他のアセンブリ言語を知っているなら、<code class=addr>#</code> は即値（immediate）を示す記号として見覚えがあるでしょう。つまりこの <code class=op>ADD</code> は「アドレス 3 の命令」に 4 を足します。「命令 4 を命令 3 に足す」ではありません。<code class=op>ADD</code> の 3 つ後の命令は <code class=op>DAT</code> なので、結果は次の通りです：</p>
+
+  <pre>
+        <span class=op>ADD</span> <strong><span class=addr>#</span>4</strong>, 3
+        <span class=op>MOV</span> 2, <span class=addr>@</span>2        <span class=comment>; 次の命令</span>
+        <span class=op>JMP</span> -2
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span><strong>4</strong></pre>
+
+  <p>命令どうしを足す場合、A-field と B-field は独立に加算されます。1 つの数値を命令に足す場合、デフォルトでは B-field に加算されます。<code class=op>ADD</code> の B-field にも <code class=addr>#</code> を付けられます。その場合、A-field が <code class=op>ADD</code> 自身の B-field に足されます。</p>
+
+  <p>即値アドレッシングは簡単で馴染み深く見えますが、ICWS ’94 の新しい <a href="#start_modif">修飾子</a> が、これに <a href="#deep_imm">全く新しいひねり</a> を加えます。ですが、まずはドワーフを見ていきましょう。</p>
+
+  <p><code class=op>MOV</code> には別のアドレッシングモードが出てきます。<code class=addr>@</code> は間接（indirect）です。見た目通りに <code class=op>DAT</code> を自分自身へコピーする（それで何が嬉しいのか？）のではなく、「B-field が指す先の命令」へコピーします：</p>
+
+  <pre>
+        <span class=op>ADD</span> <span class=addr>#</span>4, 3
+        <span class=op>MOV</span> 2, <strong><span class=addr>@</span></strong>2  <span class=comment>;  --.</span>
+        <span class=op>JMP</span> -2     <span class=comment>;    | +2</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>4 <span class=comment>; &lt;--' --. MOV の B-field がここを指す</span>
+        <span class=ellipsis>...</span>                 <span class=comment>|</span>
+        <span class=ellipsis>...</span>                 <span class=comment>| +4</span>
+        <span class=ellipsis>...</span>                 <span class=comment>|</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>4 <span class=comment>; &lt;------' DAT の B-field がここを指す</span></pre>
+
+  <p>ご覧の通り、<code class=op>DAT</code> は自分から 4 命令先にコピーされます。次の <code class=op>JMP</code> は 2 命令後ろへ飛び、<code class=op>ADD</code> へ戻します。<code class=op>JMP</code> は B-field を無視するので空にしました。MARS は 0 で初期化します。</p>
+
+  <p>なお、MARS は間接参照の鎖をさらに辿りません。間接オペランドが指す先が B-field=4 の命令であれば、実際の宛先は「そこから 4 命令先」になり、アドレッシングモードは関係ありません。</p>
+
+  <p>さて <code class=op>ADD</code> と <code class=op>MOV</code> が再び実行されます。実行が <code class=op>JMP</code> に戻ったとき、core は次のようになっています：</p>
+
+  <pre>
+        <span class=op>ADD</span> <span class=addr>#</span>4, 3
+        <span class=op>MOV</span> 2, <span class=addr>@</span>2
+        <span class=op>JMP</span> -2           <span class=comment>; 次の命令</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>8
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>4
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>8</pre>
+
+  <p>ドワーフは core を一周して自分の位置に戻るまで、4 命令おきに <code class=op>DAT</code> を落とし続けます：</p>
+
+  <pre>
+        <span class=ellipsis>...</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>-8
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>-4
+        <span class=op>ADD</span> <span class=addr>#</span>4, 3        <span class=comment>; 次の命令</span>
+        <span class=op>MOV</span> 2, <span class=addr>@</span>2
+        <span class=op>JMP</span> -2
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>-4
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=ellipsis>...</span>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>4
+        <span class=ellipsis>...</span></pre>
+      
+  <p>この状態で <code class=op>ADD</code> は <code class=op>DAT</code> を再び <code class=addr>#</code><code>0, </code><code class=addr>#</code><code>0</code> に戻し、<code class=op>MOV</code> は無意味にも <code class=op>DAT</code> を「既にある場所へ」コピーし、全体が最初から繰り返されます。</p>
+
+  <p>これは core のサイズが 4 で割り切れないと成立しません。そうでないと、ドワーフは <code class=op>DAT</code> の 1〜3 命令手前を踏んで自滅します。幸い、よく使われる core サイズは 8000 が最も一般的で、次いで 8192、55400、800 などで、いずれも 4 で割り切れるので、このドワーフは安全です。</p>
+
+  <p>補足として、ウォリアーに <code class=op>DAT</code><code class=addr> #</code><code>0, </code><code class=addr>#</code><code>0</code> を含める必要は本当はありません。core が最初に埋められている命令（ここでは三点リーダ <code class=ellipsis>...</code> と書いたもの）は実際には <code class=op>DAT</code><code> 0, 0</code> です。読みやすいので、以後も空の core を三点リーダで表します。</p>
+
+  <h3><a name="start_modes">アドレッシングモード</a></h3>
+
+  <p>Core War の初期バージョンでは、アドレッシングモードは即値（<code class=addr>#</code>）、直接（<code class=addr>$</code> または無指定）、B-field 間接（<code class=addr>@</code>）の 3 つだけでした。後に、プリデクリメント（predecrement）である <code class=addr>&lt;</code> が追加されました。これは間接と同じですが、ターゲットアドレスを計算する前にポインタを 1 減らします。</p>
+
+  <pre>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span>5
+        <span class=op>MOV</span> 0, <strong><span class=addr>&lt;</span></strong>-1       <span class=comment>; 次の命令</span></pre>
+
+  <p>この <code class=op>MOV</code> が実行されると、結果は次のようになります：</p>
+
+  <pre>
+        <span class=op>DAT</span> <span class=addr>#</span>0, <span class=addr>#</span><strong>4</strong> <span class=comment>;  ---.</span>
+        <span class=op>MOV</span> 0, <span class=addr>&lt;</span>-1 <span class=comment>;     |</span>
+        <span class=ellipsis>...</span>        <span class=comment>;     | +4</span>
+        <span class=ellipsis>...</span>        <span class=comment>;     |</span>
+        <span class=op>MOV</span> 0, <span class=addr>&lt;</span>-1 <span class=comment>; &lt;---'</span></pre>
+
+  <p>ICWS ’94 Standard Draft では、主に A-field の間接参照に対応するために 4 つのモードが追加され、合計 8 モードになりました：</p>
+
+  <ul>
+    <li><code class=addr>#</code> &mdash; 即値（immediate）</li>
+
+    <li><code class=addr>$</code> &mdash; 直接（direct。<code class=addr>$</code> は省略可）</li>
+
+    <li><code class=addr>*</code> &mdash; A-field 間接（A-field indirect）</li>
+
+    <li><code class=addr>@</code> &mdash; B-field 間接（B-field indirect）</li>
+
+    <li><code class=addr>{</code> &mdash; A-field 間接＋プリデクリメント</li>
+
+    <li><code class=addr>&lt;</code> &mdash; B-field 間接＋プリデクリメント</li>
+
+    <li><code class=addr>}</code> &mdash; A-field 間接＋ポストインクリメント</li>
+
+    <li><code class=addr>&gt;</code> &mdash; B-field 間接＋ポストインクリメント</li>
+  </ul>
+
+  <p>ポストインクリメントはプリデクリメントに似ていますが、命令が実行された <em>後</em> にポインタが 1 増えます。</p>
+
+  <pre>
+        <span class=op>DAT</span> <span class=addr>#</span>5, <span class=addr>#</span>-10
+        <span class=op>MOV</span> -1, <strong><span class=addr>}</span></strong>-1      <span class=comment>; 次の命令</span></pre>
+
+  <p>は、実行後に次のようになります：</p>
+
+  <pre>
+        <span class=op>DAT</span> <span class=addr>#</span><strong>6</strong>, <span class=addr>#</span>-10 <span class=comment>;  --.</span>
+        <span class=op>MOV</span> -1, <span class=addr>}</span>-1  <span class=comment>;    |</span>
+        <span class=ellipsis>...</span>          <span class=comment>;    |</span>
+        <span class=ellipsis>...</span>          <span class=comment>;    | <strong>+5</strong></span>
+        <span class=ellipsis>...</span>          <span class=comment>;    |</span>
+        <span class=op>DAT</span> <span class=addr>#</span><strong>5</strong>, <span class=addr>#</span>-10 <span class=comment>; &lt;--'</span></pre>
+
+  <p>プリデクリメント／ポストインクリメントで覚えておくべき重要点は、ポインタは「実際に参照に使われない場合でも」増減することです。たとえば <code class=op>JMP</code><code> -1, </code><code class=addr>&lt;</code><code>100</code> は、値を使わないのに命令 100 をデクリメントします。<code class=op>DAT</code><code class=addr> &lt;</code><code>50, </code><code class=addr>&lt;</code><code>60</code> も、プロセスを殺すだけでなくアドレスをデクリメントします。</p>
+
+  <h3><a name="start_queue">プロセスキュー</a></h3>
+
+  <p>上の命令表をよく見た人は <code class=op>SPL</code> に気づいたかもしれません。普通のアセンブリ言語にはまずありません…。</p>
+
+  <p>Core War の歴史のかなり初期に、「マルチタスクを入れればもっと面白くなる」という提案がありました。通常の OS のタイムスライス方式は抽象環境に合わない（何より OS が必要）ため、各プロセスを 1 サイクルずつ順番に実行する方式が考案されました。</p>
+
+  <p>新しいプロセスを作る命令が <code class=op>SPL</code> です。A-field にアドレスを取り、<code class=op>JMP</code> と同様に見えます。違いは、<code class=op>SPL</code> は新しいアドレスから実行を開始する <em>だけでなく</em>、次の命令でも実行を <em>継続する</em> 点です。</p>
+
+  <p>こうして生まれた 2 つ以上のプロセスは、同じ実行時間を等しく分け合います。単一のプロセスカウンタではなく、MARS は <dfn>process queue</dfn>（プロセスキュー）という「開始順に繰り返し実行されるプロセスのリスト」を持ちます。<code class=op>SPL</code> で作られた新プロセスは「現在のプロセスの直後」に追加され、<code class=op>DAT</code> を実行したプロセスはキューから削除されます。全プロセスが死ぬと、そのウォリアーは負けです。</p>
+
+  <p>重要なのは、各プログラムが <em>自分専用の</em> プロセスキューを持つことです。core に複数のプログラムがある場合、各プログラムはキューの長さに関係なく、<em>常に 1 サイクルずつ交互</em> に実行されます。したがって処理時間は常に等分されます。たとえば <span class=prog1>プログラム A</span> が 3 プロセス、<span class=prog2>プログラム B</span> が 1 プロセスなら、実行順は次のようになります：</p>
+
+  <ol>
+    <li><span class=prog1>プログラム A、プロセス 1</span>、</li>
+    <li><span class=prog2>プログラム B、プロセス 1</span>、</li>
+    <li><span class=prog1>プログラム A、プロセス 2</span>、</li>
+    <li><span class=prog2>プログラム B、プロセス 1</span>、</li>
+    <li><span class=prog1>プログラム A、プロセス 3</span>、</li>
+    <li><span class=prog2>プログラム B、プロセス 1</span>、</li>
+    <li><span class=prog1>プログラム A、プロセス 1</span>、</li>
+    <li><span class=prog2>プログラム B、プロセス 1</span>、<br>...</li>
+  </ol>
+
+  <p>最後に、<code class=op>SPL</code> の小さな例です。より詳しい話は後の章で扱います。</p>
+
+  <pre>
+        <span class=op>SPL</span> 0            <span class=comment>; ここから実行開始</span>
+        <span class=op>MOV</span> 0, 1</pre>
+
+  <p><code class=op>SPL</code> が自分自身を指しているので、1 サイクル後にはプロセスはこうなります：</p>
+
+  <pre>
+        <span class=op>SPL</span> 0            <span class=comment>; 第 2 プロセスはここ</span>
+        <span class=op>MOV</span> 0, 1         <span class=comment>; 第 1 プロセスはここ</span></pre>
+
+  <p>両方のプロセスが実行されると、core は次のようになります：</p>
+
+  <pre>
+        <span class=op>SPL</span> 0            <span class=comment>; 第 3 プロセスはここ</span>
+        <span class=op>MOV</span> 0, 1         <span class=comment>; 第 2 プロセスはここ</span>
+        <span class=op>MOV</span> 0, 1         <span class=comment>; 第 1 プロセスはここ</span></pre>
+
+  <p>つまりこのコードは、次々に Imp を発射していくのが分かります。Imp たちが core を一周して <code class=op>SPL</code> を上書きするまで続きます。</p>
+
+  <p>各プログラムのプロセスキューには上限があります。最大プロセス数に達している場合、<code class=op>SPL</code> は <em>次の命令だけ</em> で実行を継続し、結果として <code class=op>NOP</code> と同じ挙動になります。多くの場合、上限は core の長さと同程度でかなり大きいですが、もっと小さく設定されることもあります（1 の場合は分割が実質無効です）。</p>
+
+  <p>それと、「現実は小説より奇なり」という話として、私は最近 "Opcodes that should've been" というページを見ました。そこには荒唐無稽な命令がいろいろあり、その中に "<code>BBW</code> &mdash; Branch Both Ways" がありました。架空の命令のはずなのに、作者は Redcode を知らなかったのだろうとしか思えません…。</p>
+
+  <h3><a name="start_modif">命令修飾子（modifier）</a></h3>
+
+  <p>ICWS ’94 標準がもたらした最重要の新要素は、新命令や新アドレッシングモードではなく「修飾子」です。古い ’88 標準では、アドレッシングモードだけが「命令のどの部分が操作対象か」を決めます。たとえば <code class=op>MOV</code><code> 1, 2</code> は常に命令全体を移動し、<code class=op>MOV</code><code class=addr> #</code><code>1, 2</code> は数値 1 つだけを移動します（しかも <em>常に</em> B-field へ）。</p>
+
+  <p>当然、これでは困る場面が出ます。OpCode を変えずに A/B フィールドだけ移したい場合は？（<code class=op>ADD</code> を使う必要があります） B-field から A-field に移したい場合は？（可能ですが、とても厄介） そこで状況を明確化するために、修飾子が導入されました。</p>
+
+  <p>修飾子は命令に付ける接尾辞で、ソースとデスティネーションのどの部分に作用するかを指定します。たとえば <code class=op>MOV</code><code class=mod>.AB</code><code> 4, 5</code> は「アドレス 4 の A-field を、アドレス 5 の B-field に移す」ことを意味します。修飾子は 7 種類あります：</p>
+
+  <ul>
+    <li><code class=op>MOV</code><code class=mod>.A</code> &mdash; ソースの A-field をデスティネーションの A-field へ移す</li>
+
+    <li><code class=op>MOV</code><code class=mod>.B</code> &mdash; ソースの B-field をデスティネーションの B-field へ移す</li>
+
+    <li><code class=op>MOV</code><code class=mod>.AB</code> &mdash; ソースの A-field をデスティネーションの B-field へ移す</li>
+
+    <li><code class=op>MOV</code><code class=mod>.BA</code> &mdash; ソースの B-field をデスティネーションの A-field へ移す</li>
+
+    <li><code class=op>MOV</code><code class=mod>.F</code> &mdash; ソース両フィールドを、同じ対応フィールドへ移す</li>
+
+    <li><code class=op>MOV</code><code class=mod>.X</code> &mdash; ソース両フィールドを、逆対応フィールドへ移す</li>
+
+    <li><code class=op>MOV</code><code class=mod>.I</code> &mdash; ソース命令全体をデスティネーションへ移す</li>
+  </ul>
+
+  <p>当然ながら、これらの修飾子は <code class=op>MOV</code> だけでなく全命令で使えます。ただし <code class=op>JMP</code> や <code class=op>SPL</code> のように、修飾子を気にしない命令もあります。（データを扱わず、ジャンプするだけだからです。）</p>
+
+  <p>すべての修飾子がすべての命令で意味を持つわけではないので、意味が通る「最も近いもの」にフォールバックします。よくある例が <code class=mod>.I</code> です。Redcode は単純で抽象的な言語にするため、OpCode の数値的な等価物を定義していません。従って OpCode に数学演算をかける意味がありません。このため <code class=op>MOV</code>、<code class=op>SEQ</code>、<code class=op>SNE</code>（および別名の <code class=op>CMP</code>）以外では <code class=mod>.I</code> は <code class=mod>.F</code> と同義になります。</p>
+
+  <p><code class=mod>.I</code> と <code class=mod>.F</code> についてもう 1 点。アドレッシングモードも OpCode の一部であり、<code class=op>MOV</code><code class=mod>.F</code> ではコピーされません。</p>
+
+  <p>例として、古いプログラムを修飾子付きで書き直してみます。Imp は自然に <code class=op>MOV</code><code class=mod>.I</code><code> 0, 1</code> になります。Dwarf はこうです：</p>
+
+  <pre>
+        <span class=op>ADD</span><span class=mod>.AB</span> <span class=addr>#</span>4, 3
+        <span class=op>MOV</span><span class=mod>.I</span>  2, <span class=addr>@</span>2
+        <span class=op>JMP</span>    -2
+        <span class=op>DAT</span>    <span class=addr>#</span>0, <span class=addr>#</span>0</pre>
+
+  <p><code class=op>JMP</code> と <code class=op>DAT</code> は修飾子を実質使わないので省略しています。MARS は（例として）<code class=op>JMP</code><code class=mod>.B</code> や <code class=op>DAT</code><code class=mod>.F</code> に補うかもしれませんが、あまり気にしなくてよいでしょう。</p>
+
+  <p>もう 1 つ。どうやってどの修飾子を付けるか（また、付けなかった場合に MARS がどう補うか）ですが、常識的に決められる場合が多いものの、’94 標準はルールとして定義しています。</p>
+
+  <dl>
+  <dt><code class=op>DAT</code>, <code class=op>NOP</code></dt>
+
+    <dd>常に <code class=mod>.F</code> だが無視される。</dd>
+
+  <dt><code class=op>MOV</code>, <code class=op>SEQ</code>, <code class=op>SNE</code>, <code
+  class=op>CMP</code></dt>
+
+    <dd>A-mode が即値なら <code class=mod>.AB</code>、<br>
+        B-mode が即値で A-mode が即値でないなら <code class=mod>.B</code>、<br>
+        どちらも即値でないなら <code class=mod>.I</code>。</dd>
+
+  <dt><code class=op>ADD</code>, <code class=op>SUB</code>, <code class=op>MUL</code>, <code
+  class=op>DIV</code>, <code class=op>MOD</code></dt>
+
+    <dd>A-mode が即値なら <code class=mod>.AB</code>、<br>
+        B-mode が即値で A-mode が即値でないなら <code class=mod>.B</code>、<br>
+        どちらも即値でないなら <code class=mod>.F</code>。</dd>
+
+  <dt><code class=op>SLT</code>, <code class=op>LDP</code>, <code class=op>STP</code></dt>
+
+    <dd>A-mode が即値なら <code class=mod>.AB</code>、<br>
+        即値でないなら（常に）<code class=mod>.B</code>。</dd>
+
+  <dt><code class=op>JMP</code>, <code class=op>JMZ</code>, <code class=op>JMN</code>, <code
+  class=op>DJN</code>, <code class=op>SPL</code></dt>
+
+    <dd>常に <code class=mod>.B</code>（ただし <code class=op>JMP</code> と <code class=op>SPL</code> では無視される）。</dd>
+  </dl>
+
+  <hr>
+
+  <h2><a name="deeper">’94 標準をもう少し深く</a></h2>
+
+  <h3><a name="deep_imm"># は見た目以上の意味がある…</a></h3>
+
+  <p>’94 標準における即値アドレッシング（<code class=addr>#</code>）の定義は、かなり独特です。旧来の構文と 100% 互換でありながら、即値は非常に巧妙で一意な方法で定義されており、あらゆる命令と修飾子と論理的に組み合わせられ、強力な道具になります。</p>
+
+  <p>修飾子を見て、<code class=op>MOV</code><code class=mod>.F</code><code class=addr> #</code><code>7, 10</code> が何をするのか疑問に思うかもしれません。<code class=mod>.F</code> は両フィールドを移すはずなのに、ソースには数値が 1 個しかありません。では 7 をデスティネーションの両フィールドに入れるのでしょうか？</p>
+
+  <p>いいえ、そうはなりません。実際には、デスティネーションの A-field に 7 を、B-field に <em>10</em> を移します。なぜでしょう？</p>
+
+  <p>理由は、’94 の構文では、ソース（およびデスティネーション）は <em>常に</em> 命令全体だからです。即値の場合、ソース命令は「現在の命令（すなわち 0）」として扱われます。実際の値が何であってもそうです。したがって <code class=op>MOV</code><code class=mod>.F</code><code class=addr> #</code><code>7, 10</code> は、ソース（0）の両フィールドをデスティネーション（10）へ移すのです。驚きますよね？</p>
+
+  <p>同じ考え方は <code class=op>MOV</code><code class=mod>.I</code> にも適用されます。この定義により、修飾子なしでは ’88 標準で意味を持たなかった <code class=op>JMP</code><code class=addr> #</code><code>1234</code> のような命令も合理的に使えます。数値へジャンプはできませんが、「その数値のアドレス（0）へジャンプ」なら可能です。これは多くの利点をもたらします。A-field に「ただで」データを置けるだけでなく、誰かにデクリメントされてもコードが生き残ります。先ほどの Imp 生成コードも少し丈夫にできます：</p>
+
+  <pre>
+        <span class=op>SPL</span>    <span class=addr>#</span>0, <span class=addr>}</span>1
+        <span class=op>MOV</span><span class=mod>.I</span>  <span class=addr>#</span>1234, 1</pre>
+
+  <p>動きは同じですが、今度は A-field が自由になりました。お遊びとして、<code class=op>SPL</code> に Imp の A-field をインクリメントさせ、Imp がそれぞれ違う見た目になるようにしています。<code class=op>SPL</code> は B-field を使わないので、この増分も「ただ」です。動作します。信じてもよいし、自分で試してもよいでしょう！</p>
+
+  <h3><a name="deep_math">剰余（モジュロ）計算</a></h3>
+
+  <p>core のアドレスが環状であることは既に分かっているはずです。現在命令から coresize だけ進んだり戻ったりすると、同じ命令を指します。しかし実際には、これはさらに深いところまで及びます。Core War では全ての数値が 0 から <var>coresize</var>-1 の範囲に正規化されます。</p>
+
+  <p>範囲付き整数演算に慣れている人向けに言うと、Core War の数値は符号なしとして扱われ、最大値は <var>coresize</var>-1 です。それでもピンと来なければ続きを読んでください。</p>
+
+  <p>要するに、Core War の全ての数値は core の長さ <var>coresize</var> で割られ、余りだけが保持されます。たとえば 8 桁しか表示できない電卓を想像してください。桁あふれの上位桁は捨てられます。100*12345678 は 1234567800 ですが 34567800 だけが表示され保持されます。同様に core=8000 の場合、7900+222 は 8122 ですが 122 になります。</p>
+
+  <p>負数はどうなるでしょう？ これも正規化されます。正になるまで <var>coresize</var> を足します。つまり -1 は MARS では <var>coresize</var>-1 として保存され、core=8000 なら 7999 です。</p>
+
+  <p>アドレスは元から環状なので、これは大抵は問題になりません。単純な <code class=op>ADD</code> や <code class=op>SUB</code> でも、<var>coresize</var>=8000 なら 6+7998 は 4（または 8004）になり、6-2 と同じ結果です。</p>
+
+  <p>では何が問題かというと、いくつかの命令では差が出ます。<code class=op>DIV</code>、<code class=op>MOD</code>、<code class=op>SLT</code> は常に符号なしとして扱います。したがって -2/2 は -1 ではなく、(<var>coresize</var>-2)/2 です。つまり (<var>coresize</var>/2)-1（core=8000 なら 7998/2=3999）になります。同様に <code class=op>SLT</code> は -2（7998）を 0 より <em>大きい</em> とみなします。Core War では 0 が最小であり、それ以外は全て 0 より大きいのです。</p>
+
+  <h3><a name="deep_instr">’94 標準の命令を 1 つずつ</a></h3>
+
+  <p>ここまで耐えてくれたあなたにご褒美です。これまでは断片的な情報を渡してきました。ここで一度まとめとして、各命令を順に説明します。</p>
+
+  <p>もちろん、最初に命令一覧を出した時点で説明しておけば推測が減ったでしょう。でも待った理由があります。実用的なコードを先に見せたかったのと、何よりアドレッシングモードと修飾子の基本感覚を掴んでから命令を説明したかったからです。修飾子の前に命令を説明すると、まず ’88 のルールを教え、後で修飾子込みでもう一度教える必要が出ます。学習法として悪くないですが、このガイドが不必要に複雑になります。</p>
+
+  <dl>
+  <dt><code class=op>DAT</code></dt>
+
+    <dd>元々 <code class=op>DAT</code> は名前通りデータ保存用でした。Core War では命令数を減らすため、未使用フィールドにポインタなどを入れることが一般的です。そのため <code class=op>DAT</code> の最重要点は「実行するとプロセスが死ぬ」ことです。’94 標準では不正命令が存在しないため、<code class=op>DAT</code> は完全に合法な命令として定義され、<i>現在実行中のプロセスをプロセスキューから取り除きます</i>。些細な言い回しに見えるかもしれませんが、当たり前を厳密に定義すると混乱が減ります。<br><br>
+
+    修飾子は <code class=op>DAT</code> に影響しません。MARS によっては削除します。ただし、プリデクリメント／ポストインクリメントは値が使われなくても評価されることを忘れないでください。もう 1 つ、過去標準の名残として、引数が 1 つしかない場合は <em>B-field</em> に入ります。</dd>
+
+  <dt><code class=op>MOV</code></dt>
+
+    <dd><code class=op>MOV</code> は命令から命令へデータをコピーします。ここまでの章で十分理解できていなければ、前を読み返した方がよいでしょう。<code class=op>MOV</code> は数少ない <code class=mod>.I</code> 対応命令で、修飾子が省略され（かつ即値が絡まないなら）デフォルトは <code class=mod>.I</code です。</dd>
+
+  <dt><code class=op>ADD</code></dt>
+
+    <dd><code class=op>ADD</code> はソース値をデスティネーション値へ加算します。修飾子の挙動は <code class=op>MOV</code> に似ていますが、<code class=mod>.I</code> はサポートされず <code class=mod>.F</code> と同じ意味になります。（<code class=op>MOV</code><code class=mod>.AB</code> と <code class=op>DJN</code><code class=mod>.F</code> の足し算、という概念は意味を持たないでしょう？） また、Core War の演算は全て <a href="#deep_math">modulo coresize</a> で行われます。</dd>
+
+  <dt><code class=op>SUB</code></dt>
+
+    <dd>これも <code class=op>ADD</code> と同様に動きますが、違いは明白です。実際、算術系命令はだいたい同じです。</dd>
+
+  <dt><code class=op>MUL</code></dt>
+
+    <dd>…<code class=op>MUL</code> も同様です。何をするか分からないなら、かなり重要なものを見落としています。</dd>
+
+  <dt><code class=op>DIV</code></dt>
+
+    <dd><code class=op>DIV</code> も概ね同様ですが、注意点があります。まず <a href="#deep_math">符号なし除算</a> なので意外な結果になることがあります。<strong>ゼロ除算はプロセスを殺します</strong>（<code class=op>DAT</code> と同様）かつデスティネーションは変更されません。<code class=op>DIV</code><code class=mod>.F</code> や <code class=mod>.X</code> で 2 つ同時に割り算をして、一方の除数が 0 でも、もう一方の割り算は通常通り行われます。</dd>
+
+  <dt><code class=op>MOD</code></dt>
+
+    <dd><code class=op>DIV</code> と同様の注意が全て当てはまります（ゼロ除算の扱いも含む）。<code class=op>MOD</code><code class=mod>.AB</code><code class=addr> #</code><code>10, </code><code class=addr>#</code><code>-1</code> のような結果は core サイズに依存することを覚えてください。一般的な 8000 core なら結果は 9（7999 mod 10）です。</dd>
+
+  <dt><code class=op>JMP</code></dt>
+
+    <dd><code class=op>JMP</code> は A-field が指すアドレスへ実行位置を移します。算術命令との重要な違いは、<code class=op>JMP</code> は「そのアドレスが指すデータ」ではなく「アドレスそのもの」だけを気にする点です。さらに <code class=op>JMP</code> は B-field を使わないため、修飾子も無視します。2 つのアドレスへ同時にジャンプ（あるいは分岐）できると強すぎますし、次の 3 命令の実装も難しくなります。とはいえ、未使用の B-field に増減を仕込めば、運が良ければ相手コードを傷つけられます。</dd>
+
+  <dt><code class=op>JMZ</code></dt>
+
+    <dd><code class=op>JMZ</code> は <code class=op>JMP</code> に似ていますが、B-field を無視せず、B-field が指す値をテストし、0 ならジャンプします。0 でないなら次へ進みます。テスト対象が 1 命令だけなので修飾子の選択肢は限られます。<code class=mod>.AB</code> は <code class=mod>.B</code> と同義、<code class=mod>.BA</code> は <code class=mod>.A</code> と同義、<code class=mod>.X</code> と <code class=mod>.I</code> は <code class=mod>.F</code> と同義です。<code class=op>JMZ</code><code class=mod>.F</code> で両フィールドをテストする場合、<em>両方が 0 のときだけ</em> ジャンプします。</dd>
+
+  <dt><code class=op>JMN</code></dt>
+
+    <dd><code class=op>JMN</code> は <code class=op>JMZ</code> と同様ですが、テスト値が <em>0 でない</em> 場合にジャンプします（驚きはありませんね）。<code class=op>JMN</code><code class=mod>.F</code> は <em>どちらかのフィールドが 0 でなければ</em> ジャンプします。</dd>
+
+  <dt><code class=op>DJN</code></dt>
+
+    <dd><code class=op>DJN</code> は <code class=op>JMN</code> に似ていますが、テストの <em>前</em> に値を 1 減らします。ループカウンタに便利ですし、相手の破壊にも使えます。</dd>
+
+  <dt><code class=op>SPL</code></dt>
+
+    <dd>これが大物です。<code class=op>SPL</code> の導入は Redcode 史上最も重要な変更の 1 つで、ICWS ’94 の導入と並ぶほどです。<code class=op>SPL</code> は <code class=op>JMP</code> のように動きますが、実行は <em>次の命令でも</em> 継続し、プロセスが 2 つに分かれます。次の命令側のプロセスが、ジャンプ先へ行くプロセスより <em>先に</em> 実行されます。これは小さな違いに見えますが、<em>非常に</em> 重要です（多くの現代ウォリアーがこれなしでは動きません）。最大プロセス数に達している場合、<code class=op>SPL</code> は <code class=op>NOP</code> と同じです。<code class=op>JMP</code> と同様に B-field と修飾子は無視されます。</dd>
+
+  <dt><code class=op>SEQ</code></dt>
+
+    <dd><code class=op>SEQ</code> は 2 命令を比較し、等しければ次の命令をスキップします。（飛ぶのは 2 命令先だけです。ジャンプ先を書ける場所がありません。） 等値比較なので <code class=mod>.I</code> がサポートされます。<code class=mod>.F</code>、<code class=mod>.X</code>、<code class=mod>.I</code> では、<em>全フィールドが一致</em> したときだけスキップします。</dd>
+
+  <dt><code class=op>SNE</code></dt>
+
+    <dd>予想通り、比較した命令が等しくない場合に次命令をスキップします。複数フィールドを比較する場合、どれか 1 組でも一致しなければスキップします。（<code class=op>JMZ</code> と <code class=op>JMN</code> の関係と似ていますね。）</dd>
+
+  <dt><code class=op>CMP</code></dt>
+
+    <dd><code class=op>CMP</code> は <code class=op>SEQ</code> の別名です。<code class=op>SEQ</code>/<code class=op>SNE</code> が導入される前はこの名前しかありませんでした。今では多くの MARS が ’88 モードでも <code class=op>SEQ</code> を認識するので、どちらを使っても大差ありません。</dd>
+
+  <dt><code class=op>SLT</code></dt>
+
+    <dd><code class=op>SLT</code> は「第 1 の値が第 2 より小さい」場合に次命令をスキップします。これは論理比較ではなく算術比較なので <code class=mod>.I</code> を使う意味はありません。<code>SGT</code>（大きいならスキップ）があってもよさそうですが、多くの場合はオペランドを入れ替えれば同じ効果が得られます。<a href="#deep_math">全ての値は符号なし</a> として扱われるため、0 が最小で、<em>-1 が最大</em> です。</dd>
+
+  <dt><code class=op>NOP</code></dt>
+
+    <dd>何もしない命令です。（何もしないことに関しては完璧です。） 実戦ウォリアーではほぼ使いませんが、デバッグには有用です。増減が設定されていれば、それは評価されます。</dd>
+  </dl>
+
+  <p>なお <code class=op>LDP</code> と <code class=op>STP</code> の 2 命令が未説明ですが、比較的新しい追加であり、次で説明します。:-)</p>
+
+  <h3><a name="deep_space">P-space &mdash; 最後のフロンティア</a></h3>
+
+  <p>P-space は pMARS 0.8 で導入された Redcode の最新要素です。P は private / permanent / personal / pathetic など、お好きな意味でどうぞ。要するに P-space は「自分のプログラムだけがアクセスでき」「マルチラウンドの対戦でラウンド間を越えて保持される」メモリ領域です。</p>
+
+  <p>P-space は通常の core と多くの点で異なります。まず、各 P-space の場所は命令ではなく数値 1 つだけを保存します。また、P-space のアドレスは絶対で、core 内のどこにその命令が置かれていても P-space のアドレス 1 は常に 1 です。さらに、P-space へアクセスできる命令は <code class=op>LDP</code> と <code class=op>STP</code> の 2 つだけです。</p>
+
+  <p>この 2 命令の構文は少し変わっています。たとえば <code class=op>STP</code> は core の通常値をソースに取り、その値を「デスティネーションが指す P-space フィールド」に書き込みます。つまり P-space の場所は「デスティネーションの <em>アドレス</em>」ではなく「デスティネーションの <em>値</em>」で決まります。もしこれが <code class=op>MOV</code> だったなら上書きされる値、ということです。</p>
+
+  <p>たとえば <code class=op>STP</code><code class=mod>.AB</code><code class=addr> #</code><code>4, </code><code class=addr>#</code><code>5</code> は、<em>値</em> 4 を <em>P-space フィールド</em> 5 に保存します。同様に、</p>
+
+  <pre>
+        <span class=op>STP</span><span class=mod>.B</span>  2, 3
+        <span class=ellipsis>...</span>
+        <span class=op>DAT</span>    <span class=addr>#</span>0, <span class=addr>#</span>10
+        <span class=op>DAT</span>    <span class=addr>#</span>0, <span class=addr>#</span>7</pre>
+
+  <p>は、値 10 を P-space フィールド <strong>7</strong> に書き込みます。3 ではありません！ <code class=op>STP</code> 自身が間接アドレッシングを使うと、ある種の「二重間接」になり、かなり混乱します。</p>
+
+  <p><code class=op>LDP</code> は同様ですが、ソースが P-space フィールドになり、デスティネーションが core 命令になります。</p>
+
+  <p>P-space のサイズは通常 core より小さく、典型的には core サイズの 1/16 です。P-space のアドレスも core と同様に環状です。P-space のサイズは core サイズの因数でなければならず、そうでないと妙なことが起きます。</p>
+
+  <p>P-space の 0 番地は特別で、各ラウンドの前に特別な値で初期化されます。第 1 ラウンドでは -1、前ラウンドで死んだ場合は 0、それ以外は生存プログラム数です。1 対 1 なら 0 は負け、1 は勝ち、2 は引き分けです。この初期化により、0 番地はラウンド間の任意情報の受け渡しには使えません。次ラウンド開始前に MARS が上書きするからです。</p>
+  
+  <p>pMARS 実装には P-space に関する癖があります。P-space アクセスを遅く保つ意図から、1 命令で 2 フィールド同時にロード／セーブすることは許可されていません。これは良いのですが、結果は少なくとも不格好です。具体的には <code class=op>LDP</code><code class=mod>.F</code>、<code class=mod>.X</code>、<code class=mod>.I</code> は全て <code class=op>LDP</code><code class=mod>.B</code> と同じ動きになります（<code class=op>STP</code> も同様です）。</p>
+
+  <p>P-space の最も一般的な用途は、戦略選択です。最も単純には、前回の戦略を P-space に保存し、P-space の 0 番地が「前回負け」を示していれば戦略を切り替えます。この種のプログラムは P-warriors、P-switchers、P-brains（<i>pea-brains</i> と発音）などと呼ばれます。</p>
+
+  <p>残念ながら P-space は見かけほど私的ではありません。相手はあなたの P-space を直接読み書きできませんが、あなたのプロセスが捕獲されて相手コード（<code class=op>STP</code> を含む）を実行させられることがあります。この種の手法は brainwashing（洗脳）と呼ばれ、P-switcher はそれに備え、戦略フィールドが妙な値になっても暴走しないようにする必要があります。</p>
+
+  <hr>
+
+  <h2><a name="parser">パーサ（アセンブラ）</a></h2>
+
+  <h3><a name="parse_label">ラベルとアドレス</a></h3>
+
+  <p>これまでは、例のプログラムでアドレスを「現在命令からの相対命令番号」で書いてきました。しかし大きなプログラムでは面倒で、読みづらくもなります。幸い、Redcode ではラベル、記号定数、マクロなど、良いアセンブラに期待する機能が使えます。命令にラベルを付け、ラベルで参照すれば、実アドレスはパーサが計算してくれます：</p>
+
+  <pre>
+imp:    <span class=op>mov</span><span class=mod>.i</span>   imp, imp+1</pre>
+
+  <p>どうでしょう？ これは最初に出したプログラムと同じです。数値アドレスをラベル "imp" 参照に置き換えただけです。ただ、この例では有効性は薄いです。ラベルを使っているのは "imp" 自身だけで、ここは 0 に置き換わるからです。</p>
+
+  <p>実行前に、MARS のパーサはラベルなどの記号を数値へ変換します。こうして「前処理された」Redcode ファイルは <dfn>load file</dfn>（ロードファイル）と呼ばれます。全ての MARS はロードファイルを読めますが、完全なパーサを持たないものもあります。ロードファイル形式では先ほどのコードは <code class=op>MOV</code><code class=mod>.I</code><code> 0, 1</code> になります。また、同じコードを次のようにも書けます：</p>
+
+  <pre>
+imp:    <span class=op>mov</span><span class=mod>.i</span>   imp, next
+next:   <span class=op>dat</span>     0, 0            <span class=comment>; あるいは何でも</span></pre>
+
+  <p>この場合、"next" は "imp" の 1 命令後なので 1 に置き換わります。実アドレスは相対数値のままなので、Imp が "next" の上へコピーして進んでも、Imp は相変わらず <code class=op>MOV</code><code class=mod>.I</code><code> 0, 1</code> のままです。</p>
+
+  <p>ラベル末尾の <code>:</code> は必須ではありません。ここでは見やすさのため付けましたが、私は自分のコードでは通常付けません。好みの問題です。</p>
+
+  <p>念のため。Redcode 命令は大文字小文字を区別しません。私はソースは小文字の方が見た目が良いので小文字を好み、コンパイル済み（ロードファイル）だけ大文字にします（主に伝統です）。</p>
+
+  <h3><a name="parse_whole">全体像</a></h3>
+
+  <p>これまでの例はコンパイルできるかもしれませんが、プログラムの断片に過ぎません。典型的な Redcode ファイルには、MARS 向けの追加情報があります。</p>
+
+  <pre>
+<span class=rcline>;redcode-94</span>
+<span class=metakey>;name</span> <span class=metaval>Imp</span>
+<span class=metakey>;author</span> <span class=metaval>A.K. Dewdney</span>
+
+        <span class=pseudo>org</span>     imp
+
+imp:    <span class=op>mov</span><span class=mod>.i</span>   imp, imp+1
+        <span class=pseudo>end</span></pre>
+
+  <p>既に気づいていると思いますが、Redcode では <code class=comment>;</code> 以降はコメントです。ただし先頭の数行は単なるコメントではありません。MARS はそこからプログラム情報を取得します。</p>
+
+  <p>最初の行 <code class=rcline>;redcode-94</code> は「これは Redcode ファイルである」ことを示します。この行より上は MARS に無視されます。実際は <code class=rcline>;redcode</code> で始まればよいのですが、残りで Redcode の方言を識別できます。特に <a href="#parse_hill">KotH サーバ</a> はこの行を自分で読み、どの hill に送るかを判断します。</p>
+
+  <p><code class=metakey>;name</code> と <code class=metakey>;author</code> はプログラム情報です。任意形式でも書けますが、特定コードを使うと MARS が読み取って実行時に表示できます。</p>
+
+  <p><code class=pseudo>END</code> 行は、（予想通り）プログラムの終端です。以後は無視されます。<code class=rcline>;redcode</code> と組み合わせると、メールに Redcode を埋め込む用途にも使えます。</p>
+
+  <p><code class=pseudo>ORG</code> は実行開始位置を示します。これにより、プログラム本体の前に他命令を置けます。<code class=pseudo>ORG</code> は ’94 標準で追加されたものです。古い書き方では開始アドレスを <code class=pseudo>END</code> の引数にします。</p>
+
+  <pre>
+<span class=rcline>;redcode-94</span>
+<span class=metakey>;name</span> <span class=metaval>Imp</span>
+<span class=metakey>;author</span> <span class=metaval>A.K. Dewdney</span>
+
+imp:    <span class=op>mov</span><span class=mod>.i</span>   imp, imp+1
+
+        <span class=pseudo>end</span>     imp</pre>
+
+  <p>単純で短いのですが、残念ながら理屈としては微妙です。長いプログラムでは開始位置を見るために末尾までスクロールする必要も出ます。Redcode では <code class=pseudo>ORG</code> も <code class=pseudo>END</code> も <dfn>pseudo-OpCodes</dfn>（疑似命令）と呼びます。命令のように見えますが、実際にはプログラムへコンパイルされません。</p>
+
+  <p>Imp はこのくらいにして、Dwarf を現代 Redcode で書くとこうです：</p>
+
+  <pre>
+<span class=rcline>;redcode-94</span>
+<span class=metakey>;name</span> <span class=metaval>Dwarf</span>
+<span class=metakey>;author</span> <span class=metaval>A.K. Dewdney</span>
+<span class=metakey>;strategy</span> <span class=metaval>一定間隔で core を爆撃する。</span>
+<span class=comment>;(slightly modified by Ilmari Karonen)</span>
+<span class=assert>;assert</span> CORESIZE % 4 == 0
+
+        <span class=pseudo>org</span>     loop
+
+loop:   <span class=op>add</span><span class=mod>.ab</span>  <span class=addr>#</span>4, bomb
+        <span class=op>mov</span><span class=mod>.i</span>   bomb, <span class=addr>@</span>bomb
+        <span class=op>jmp</span>     loop
+bomb:   <span class=op>dat</span>     <span class=addr>#</span>0, <span class=addr>#</span>0
+
+        <span class=pseudo>end</span></pre>
+
+  <p>ラベルがあると理解しやすいですね。ここではコメント行も 2 つ追加しました。<code class=metakey>;strategy</code> はプログラムの簡単な説明で、複数行書けます。多くの MARS は無視しますが、hill は <code class=metakey>;strategy</code> を表示します。上のプログラムを送ると、例えば次のように見えるかもしれません：</p>
+
+  <pre>
+A new challenger has appeared on the '94 hill!
+
+Dwarf by A.K. Dewdney: (length 4)
+;strategy Bombs the core at regular intervals.
+
+[other info here...]</pre>
+
+  <h3><a name="parse_ass">環境と ;assert</a></h3>
+
+  <p>例に新しく出てきたのが <code class=assert>;assert</code> 行です。これはプログラムが現在の設定で本当に動作するかを確認するために使えます。Dwarf は core サイズが 4 で割り切れないと自滅するので、<code class=assert>;assert</code><code> CORESIZE % 4 == 0</code> を入れて常に成り立つことを保証しています。</p>
+
+  <p><var>CORESIZE</var> は core サイズを示す定義済み定数です。つまり <var>n</var>+<var>CORESIZE</var> は常に <var>n</var> と同じアドレスです。<code>%</code> は剰余演算子です。<code class=assert>;assert</code> 行などで使える式の構文は <em>C 言語と同じ</em> ですが、演算子の種類はかなり限定されています。</p>
+
+  <p>C を知らない人向けに、Redcode 式で使われる演算子の一覧です：</p>
+
+  <dl class=compact>
+  <dt>算術：</dt>
+    <dd><code>+</code> 加算<br>
+    <code>-</code> 減算（または符号反転）<br>
+    <code>*</code> 乗算<br>
+    <code>/</code> 除算<br>
+    <code>%</code> 剰余</dd>
+  <dt>比較：</dt>
+    <dd><code>==</code> 等しい<br>
+    <code>!=</code> 等しくない<br>
+    <code>&lt;</code> 小さい<br>
+    <code>&gt;</code> 大きい<br>
+    <code>&lt;=</code> 以下<br>
+    <code>&gt;=</code> 以上</dd>
+  <dt>論理：</dt>
+    <dd><code>&amp;&amp;</code> AND<br>
+    <code>||</code> OR<br>
+    <code>!</code> NOT</dd>
+  <dt>代入：</dt>
+    <dd><code>=</code> <a href="#parse_var">変数</a> への代入</dd>
+  </dl>
+
+  <p><code class=assert>;assert</code> の後ろには論理式が続きます。偽ならコンパイルされません。C と同様、0 が偽でそれ以外が真です。論理演算子と比較演算子は真なら 1 を返し、後で便利なことがあります。</p>
+
+  <p>典型的には <code class=assert>;assert</code> は core サイズが想定通りか確認します（例：<code class=assert>;assert</code><code> CORESIZE == 8000</code>）。P-space を使う場合は <code class=assert>;assert</code><code> PSPACESIZE &gt; 0</code> で存在確認できます。Dwarf は適応性があるので、特定値ではなく割り切れ条件だけを確認しました。Imp は <em>どんな</em> 設定でも動くので <code class=assert>;assert</code><code> 1</code> や <code class=assert>;assert</code><code> 0 == 0</code> のように常に真の式でも構いません。そうしないと MARS が "<samp>missing ;assert line -- warrior may not work with current settings.</samp>" と警告する場合があります。</p>
+
+  <p>定義済み定数の一部（<var>CORESIZE</var> など）は ’94 標準が定義し、他は追加され得ます。pMARS 0.8 は少なくとも次をサポートするはずです：</p>
+
+  <ul>
+    <li><var>CORESIZE</var> &mdash; core のサイズ（既定 8000）</li>
+    <li><var>PSPACESIZE</var> &mdash; P-space のサイズ（既定 500）</li>
+    <li><var>MAXCYCLES</var> &mdash; 引き分けになるまでのサイクル数（既定 80000）</li>
+    <li><var>MAXPROCESSES</var> &mdash; プロセスキュー最大（既定 8000）</li>
+    <li><var>WARRIORS</var> &mdash; core 内のプログラム数（通常 2）</li>
+    <li><var>MAXLENGTH</var> &mdash; プログラム最大長（既定 100）</li>
+    <li><var>CURLINE</var> &mdash; いままでにコンパイルした命令数（0 から <var>MAXLENGTH</var>）</li>
+    <li><var>MINDISTANCE</var> &mdash; 2 ウォリアー間の最小距離（既定 100）</li>
+    <li><var>VERSION</var> &mdash; pMARS バージョン×100（80 以上）</li>
+  </ul>
+
+  <h3><a name="parse_equ">#define？ まあ、ほぼそれ…</a></h3>
+
+  <p>定義済み定数もラベルも便利ですが、それだけでしょうか？ 変数のようなものは使えないのでしょうか？</p>
+
+  <p>Redcode はアセンブリ言語なので変数は多く使いません。しかしそれに近いもの（時にはそれ以上）があります。疑似命令 <code class=pseudo>EQU</code> で独自の定数、式、さらにはマクロ的なものも定義できます：</p>
+
+  <pre>
+step    <span class=pseudo>equ</span>     2667</pre>
+
+  <p>これ以後、<var>step</var> は常に 2667 に置換されます。ただし罠があります。置換は数値ではなくテキストです。この例なら問題になりにくいですが、<code class=pseudo>EQU</code> を強力にする一方で、C のマクロと同様の問題も起こります。例を見ましょう。</p>
+
+  <pre>
+step    <span class=pseudo>equ</span>     2667
+target  <span class=pseudo>equ</span>     step-100
+
+start   <span class=op>mov</span><span class=mod>.i</span>   target, step-target</pre>
+
+  <p><code class=op>MOV</code> の A-field は 2567 になりますが、B-field は 2667-2667-100 == -100 になってしまいます。本来は 2667-(2667-100) == 100 を意図したでしょう。解決は簡単です。<code class=pseudo>EQU</code> の式には常に括弧を付けることです。例えば "<code>target </code><code class=pseudo>equ</code><code> (step-100)</code>" のように。</p>
+
+  <p>最近の pMARS では複数行 <code class=pseudo>equ</code> が使え、マクロ風にできます：</p>
+
+  <pre>
+dec7    <span class=pseudo>equ</span>     <span class=op>dat</span> <span class=addr>#</span>1, <span class=addr>#</span>1
+        <span class=pseudo>equ</span>     <span class=op>dat</span> <span class=addr>$</span>1, <span class=addr>$</span>1
+        <span class=pseudo>equ</span>     <span class=op>dat</span> <span class=addr>@</span>1, <span class=addr>@</span>1
+        <span class=pseudo>equ</span>     <span class=op>dat</span> <span class=addr>*</span>1, <span class=addr>*</span>1
+        <span class=pseudo>equ</span>     <span class=op>dat</span> <span class=addr>{</span>1, <span class=addr>{</span>1
+        <span class=pseudo>equ</span>     <span class=op>dat</span> <span class=addr>}</span>1, <span class=addr>}</span>1
+        <span class=pseudo>equ</span>     <span class=op>dat</span> <span class=addr>&lt;</span>1, <span class=addr>&lt;</span>1
+
+decoy   dec7
+        dec7            <span class=comment>; 21 命令のデコイ</span>
+        dec7</pre>
+
+  <h3><a name="parse_for">"rof" は何のため？</a></h3>
+
+  <p>pMARS パーサの機能はまだあります。これは上のどれよりも強力で（そして学びにくい）かもしれません。<code class=pseudo>FOR</code>/<code class=pseudo>ROF</code> はソースを短くし、複雑なコード列を簡単に作るだけでなく、設定に応じた条件付きコードも作れます。</p>
+
+  <p><code class=pseudo>FOR</code> ブロックは疑似命令 <code class=pseudo>FOR</code> と「繰り返し回数」で始まります。前にラベルがあると、ループカウンタとして使われます：</p>
+
+  <pre>
+index   <span class=pseudo>for</span>     7
+        <span class=op>dat</span>     index, 10-index
+        <span class=pseudo>rof</span></pre>
+
+  <p>ブロックは <code class=pseudo>ROF</code> で終わります。（古い決まり文句 <code>NEXT</code> や <code>REPEAT</code> より良いと思います。） 上は pMARS により次のように展開されます：</p>
+
+  <pre>
+        <span class=op>DAT</span><span class=mod>.F</span>   <span class=addr>$</span>1, <span class=addr>$</span>9
+        <span class=op>DAT</span><span class=mod>.F</span>   <span class=addr>$</span>2, <span class=addr>$</span>8
+        <span class=op>DAT</span><span class=mod>.F</span>   <span class=addr>$</span>3, <span class=addr>$</span>7
+        <span class=op>DAT</span><span class=mod>.F</span>   <span class=addr>$</span>4, <span class=addr>$</span>6
+        <span class=op>DAT</span><span class=mod>.F</span>   <span class=addr>$</span>5, <span class=addr>$</span>5
+        <span class=op>DAT</span><span class=mod>.F</span>   <span class=addr>$</span>6, <span class=addr>$</span>4
+        <span class=op>DAT</span><span class=mod>.F</span>   <span class=addr>$</span>7, <span class=addr>$</span>3</pre>
+
+  <p><code class=pseudo>FOR</code> ブロックは入れ子にもできます。中に <code class=pseudo>EQU</code> も入れられ、面白いコードが作れます。さらに便利なのは、ループカウンタを <code>&amp;</code> 演算子でラベルに結合できる点です。ラベル重複を避ける用途が多いですが、他にも使えます。</p>
+
+  <pre>
+dest01  <span class=pseudo>equ</span>     1000
+dest02  <span class=pseudo>equ</span>     1234
+dest03  <span class=pseudo>equ</span>     1666
+dest04  <span class=pseudo>equ</span>     (CORESIZE-1111)
+
+jtable
+ix      <span class=pseudo>for</span>     4
+jump&amp;ix <span class=op>spl</span>     dest&amp;ix
+        <span class=op>djn</span><span class=mod>.b</span>   jump&amp;ix, <span class=addr>#</span>ix
+        <span class=pseudo>rof</span></pre>
+
+  <p>これは <code class=pseudo>FOR</code>/<code class=pseudo>ROF</code> の処理後、次になります：</p>
+
+  <pre>
+jtable
+jump01  <span class=op>spl</span>     dest01
+        <span class=op>djn</span><span class=mod>.b</span>   jump01, <span class=addr>#</span>1
+jump02  <span class=op>spl</span>     dest02
+        <span class=op>djn</span><span class=mod>.b</span>   jump02, <span class=addr>#</span>2
+jump03  <span class=op>spl</span>     dest03
+        <span class=op>djn</span><span class=mod>.b</span>   jump03, <span class=addr>#</span>3
+jump04  <span class=op>spl</span>     dest04
+        <span class=op>djn</span><span class=mod>.b</span>   jump04, <span class=addr>#</span>4</pre>
+
+  <p>これを何に使うかは想像次第です。ここまで複雑な式を使うウォリアーは、私が見た範囲では quickscanner くらいです。定義済み定数は <code class=pseudo>FOR</code>/<code class=pseudo>ROF</code> でも使えます。例えば：</p>
+
+  <pre>
+<span class=comment>; ここにウォリアー本体</span>
+
+decoy
+foo     <span class=pseudo>for</span>     (MAXLENGTH-CURLINE)
+        <span class=op>dat</span>     1, 1
+        <span class=pseudo>rof</span>
+
+        <span class=pseudo>end</span></pre>
+
+  <p>これはウォリアーの残り領域を <code class=op>DAT</code><code> 1, 1</code> で埋めます。自分のプログラムをデコイから離れた場所へコピー（<dfn>boot</dfn>）していれば、攻撃の誤誘導に使えます。ここで <var>foo</var> を意味のないループカウンタとして置いているのは、そうしないと MARS が <var>decoy</var> をループカウンタと誤認するためです。</p>
+
+  <p>最後に、<code class=pseudo>FOR</code>/<code class=pseudo>ROF</code> をより創造的に使う例です：</p>
+
+  <pre>
+<span class=rcline>;redcode-94</span>
+<span class=metakey>;name</span> <span class=metaval>Tricky</span>
+<span class=metakey>;author</span> <span class=metaval>Ilmari Karonen</span>
+<span class=metakey>;strategy</span> <span class=metaval>とても複雑なウォリアー的な何か</span>
+<span class=metakey>;strategy</span> <span class=metaval>（条件付きコードの分かりやすい例）</span>
+<span class=assert>;assert</span> CORESIZE == 8000 || CORESIZE == 800
+<span class=assert>;assert</span> MAXPROCESSES &gt;= 256 &amp;&amp; MAXPROCESSES &lt; 10000
+<span class=assert>;assert</span> MAXLENGTH &gt;= 100
+
+        <span class=pseudo>org</span>     start
+
+        <span class=pseudo>for</span>     0
+<span class=comment>これは for/rof のコメントブロックです。繰り返し回数が 0 なので、
+ここは MARS に無視されます。複雑な戦略の説明を書くのに最適です。</span>
+        <span class=pseudo>rof</span>
+
+<span class=comment>;もちろん普通のコメントでも可能です。好みでどうぞ。</span>
+
+        <span class=pseudo>for</span>     (CORESIZE == 8000)
+step    <span class=pseudo>equ</span>     normalstep
+<span class=comment>;比較が真なら 1、偽なら 0 を返すので、このコードは条件が真のときだけコンパイルされます。</span>
+        <span class=pseudo>rof</span>
+
+        <span class=pseudo>for</span>     (CORESIZE == 800)
+step    <span class=pseudo>equ</span>     tinystep
+<span class=comment>;小さい core 用の最適化定数をここに置けます。</span>
+        <span class=pseudo>rof</span>
+
+        <span class=pseudo>for</span>     0
+<span class=metakey>;strategy</span> <span class=metaval>strategy と assert 行はコメントなので、FOR 0 / ROF の中でも解析されます！</span>
+        <span class=pseudo>rof</span>
+
+<span class=comment>;[ここに実コード..]</span></pre>
+
+  <h3><a name="parse_var">変数でバリエーション</a></h3>
+
+  <p><code class=pseudo>EQU</code> で定義した定数の問題は、まあ、定数であることです。定義後に値を変えられません。多くの場合はそれで十分ですが、いくつかの技巧がほぼ不可能になります。</p>
+
+  <p>幸い pMARS には実変数が少し用意されています。使い方は少し癖があり、実際に使う人は長らく見ていませんが、存在はします。</p>
+
+  <p>変数名は 1 文字で、実質 26 個（<var>a</var> から <var>z</var>）です。<code class=pseudo>EQU</code> ではなく、<code>=</code> で代入します。癖のある点は、代入するには式が必要なことです。さらに pMARS はコンマ演算子を認識しないので、ダミー式が必要になる場合があります。</p>
+
+  <p>それでも変数は役に立ちます。例えば次の自動生成フィボナッチ列は、変数がなければおそらく不可能でしょう。</p>
+
+  <pre>
+        <span class=op>dat</span>     <span class=addr>#</span>1, (g=0)+(f=1)
+idx     <span class=pseudo>for</span>     15
+        <span class=op>dat</span>     <span class=addr>#</span>idx+1, (f=f+g)+((g=f-g) &amp;&amp; 0)
+        <span class=pseudo>rof</span></pre>
+
+  <p><code>(g=f-g)</code> を 0 との AND で「隠して」いる点に注目してください。この仕組みは、pMARS が式を並べ替えず、加算の左側を常に先に評価するため成立します。右側を計算するときには <var>f</var> が既に増えている、というわけです。</p>
+
+  <h3><a name="parse_pin">PIN と針の穴</a></h3>
+
+  <p>さて、もう 1 つ疑似命令がありました。ほとんど使われませんが存在します。<code class=pseudo>PIN</code> は "P-space Identification Number" の略です。2 つのプログラムが同じ <code class=pseudo>PIN</code> を持つと P-space を共有します。これはプロセス間通信や協調にも使えます。しかし、効果的で高速な通信手段を作る手間に見合う戦略は、あまりなさそうです。とはいえ試したいならどうぞ。成功するかもしれません。</p>
+
+  <p>プログラムに <code class=pseudo>PIN</code> がない場合、P-space は常に私有です。共有していても、特殊な 0 番地（読み取り専用として扱われる特別初期化領域）は常に私有です。</p>
+
+  <h3><a name="parse_hill">丘に登る（KotH）</a></h3>
+
+  <p>もし知らないなら説明します。<dfn>King of the Hill</dfn> サーバ（しばしば <dfn>hills</dfn> と呼ぶ）は、インターネット上で継続運用される Core War トーナメントです。ウォリアーをメール（または Web フォーム）で送ると、サーバが hill 上の（通常 10〜30）プログラムすべてと対戦させます。合計スコアが最低のプログラムは hill から落ち、新規ウォリアーがそれに入れ替わります（少なくとも 1 つ以上の既存プログラムより良いスコアを出した場合）。この基本形には、無限 hill、diversity hill など様々な派生もあります。</p>
+
+  <p>hill は実行時間節約のため、実際の対戦前にロードファイルへ事前コンパイルすることがよくあります。その結果、<var>WARRIORS</var> のような定義済み定数が不正確になり、謎の <code class=assert>;assert</code> 問題を引き起こすことがあります。</p>
+
+  <p>現在（2012 年 4 月時点）利用可能な主な KotH サーバは 2 つあります：</p>
+
+  <dl>
+    <dt><a href="http://www.koth.org/">KotH.org</a></dt>
+
+    <dd>現存する中で最古かつ最も有名な KotH サーバ。現在 7 つの hill をホストし、設定の違いがある。うち 2 つはマルチウォリアーの melee、2 つは古い Redcode ’88 標準を使う。</dd>
+
+    <dt><a href="http://sal.discontinuity.info/">KOTH@SAL</a></dt>
+
+    <dd>こちらも 7 つの hill をホスト。<a href="http://sal.discontinuity.info/hill.php?key=94b">Beginners' hill</a>（初心者 hill）があり、50 回のチャレンジを生き残ると自動的に押し出され、新規プレイヤーが載りやすいようになっている。</dd>
+  </dl>
+
+  <p>また、<a href="https://asdflkj.net/COREWAR/koenigstuhl.html">Koenigstuhl</a> サーバは、公開済みウォリアー向けに 10 個の「無限」hill をホストしています。これらの hill ではウォリアーは押し出されず、hill は増え続けます。Koenigstuhl はランキングに応じて寄与度を調整する再帰的スコアリングアルゴリズムも使っています。</p>
+
+  <p>上の一覧は網羅ではなく、古くなる可能性があります。稼働中の KotH サーバ一覧のより詳しく最新の情報は、（現時点では）<a href="http://www.corewar.info/hills.htm">corewar.info のページ</a> にあります。</p>
+
+  <hr>
+
+  <h2><a name="history">更新履歴</a></h2>
+
+  <dl class=compact>
+    <dt><strong>v. 0.50</strong></dt><dd>パーサ章を書き終えた。（1997 年 3 月 25 日）</dd>
+
+    <dt>v. 0.51</dt><dd>for/rof 例のバグを修正</dd>
+
+    <dt>v. 0.52</dt><dd><em>最初の公開版</em></dd>
+
+    <dt>v. 0.53</dt><dd>誤字脱字を修正</dd>
+
+    <dt>v. 0.54</dt><dd>’88 から ’94 への変換ルールを追加</dd>
+
+    <dt>v. 0.55</dt><dd>HTML を少し整形</dd>
+
+    <dt><strong>v. 1.00</strong></dt><dd><code>=</code> 演算子の情報を追加。これを機に「バージョン 1」とする。（1997 年 5 月 5 日）</dd>
+
+    <dt>v. 1.01</dt><dd><code>&lt;DD&gt;</code> タグの小さな互換性問題を修正。</dd>
+
+    <dt>v. 1.02</dt><dd>誤字と不自然な文を修正。ナビゲーションバーをサイトの他ページと共通スタイルに変更。</dd>
+
+    <dt>v. 1.03</dt><dd>画像と align 属性を削除し、doctype を Strict に変更。</dd>
+
+    <dt><strong>v. 1.10</strong></dt><dd><em>うわっ！</em> ずっと <code class=op>SLT</code> の説明を逆に書いていた！修正。（1998 年 3 月 8 日）</dd>
+
+    <dt>v. 1.20</dt><dd><a href="#parse_hill">Climbing the hill</a> を現状に合わせて大幅に書き直し、他にも軽微な変更。文書を <a href="https://vyznev.net">vyznev.net</a> の新アドレスへ移動。<a href="https://creativecommons.org">Creative Commons</a> ライセンスへ変更。（2003 年 10 月 7 日）</dd>
+
+    <dt><strong>v. 1.21</strong></dt><dd>CSS 対応ブラウザ向けに色を追加。軽微な変更と誤字修正。タイトルの表記を統一。<a href="https://vyznev.net">vyznev.net</a> での最初の公開版。（2004 年 4 月 11 日）</dd>
+
+    <dt>v. 1.22</dt><dd>ライセンスを CC-By-NC 2.0 から CC-By 3.0 に更新し、商用利用制限を撤廃。ページ移動通知ボックスを削除。KotH サーバ一覧を更新し、停止した hill を削除。内容はそれ以外変更なし。（2012 年 4 月 16 日）</dd>
+
+    <dt>v. 1.23</dt><dd>pMARS における P-space の 0 番地の扱い説明の長年の誤りを修正。（読み取り専用ではなく、各ラウンド前に自動上書きされる。） Aritz Erkiaga が <a href="https://github.com/aerkiaga/hmars/issues/42">発見</a> し報告してくれたことに感謝。（2020 年 8 月 11 日）</dd>
+    
+    </dl>
+
+  <hr>
+
+  <h2><a name="copyright">著作権</a></h2>
+
+  <!-- 日本語訳注記（変更点の明示）:
+       本ページは原文（英語）を日本語に翻訳したものです。内容・構造は可能な範囲で保持しています。 -->
+
+  <p xmlns:cc="https://creativecommons.org/ns#"><a rel="license"
+  href="https://creativecommons.org/licenses/by/3.0/"><img alt="Creative Commons License"
+  style="border-width:0;float:right" src="https://i.creativecommons.org/l/by/3.0/88x31.png" /></a>
+  Copyright 1997-2020 <a property="cc:attributionName" rel="cc:attributionURL"
+  href="https://vyznev.net/">Ilmari Karonen</a>.</p>
+
+  <p>本作品は <a rel="license"
+  href="https://creativecommons.org/licenses/by/3.0/">Creative Commons Attribution 3.0 Unported
+  License</a>（CC BY 3.0）で提供されています。</p>
+
+  <p>この日本語版は上記原文を翻訳した派生物です。原著者・出典・ライセンス表記を保持し、変更（翻訳）を明示しています。</p>
+
+</body>
+</html><!-- Google tag (gtag.js) -->
+<script async='true' src='https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6'></script>
+<script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VYN4SZK0E6');
+      </script>
