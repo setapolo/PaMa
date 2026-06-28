@@ -1,245 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <meta charset="utf-8" />
-    <title>Boids</title>
-  </head>
-  <body>
-    <script>
-        let flock;
+<!doctype html>
+<!--
+  GridShader v0.3
+  Copyright (c) 2026 SSOM. All rights reserved.
 
-function setup() {
-  createCanvas(1200, 800);
-  createP("Drag the mouse to generate new boids.");
+  GridShader is provided as an experimental prototype, without warranty of any kind.
+  
+  app.wasm is generated from GridShader source code.
+  Copyright (c) 2026 SSOM. All rights reserved.
+-->
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GridShader v0.3 - HTML UI Editor</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0f1117;--panel:#171a23;--panel-2:#202433;--line:#30364a;--text:#e7eaf2;--muted:#9aa3b8;--accent:#7ee787;--danger:#ff7b72;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;--sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--sans)}body{padding:18px}.app{display:grid;grid-template-columns:minmax(320px,460px) minmax(320px,1fr);gap:16px;align-items:start;max-width:1280px;margin:0 auto}.panel{background:linear-gradient(180deg,var(--panel),#12151d);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}.header{padding:16px 18px 12px;border-bottom:1px solid var(--line)}h1{margin:0;font-size:20px;letter-spacing:.02em}.subtitle{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.45}.controls{padding:16px 18px 18px;display:grid;gap:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{display:grid;gap:6px;color:var(--muted);font-size:12px}input,textarea,button{font:inherit}input,textarea{user-select:text;-webkit-user-select:text;pointer-events:auto;caret-color:var(--accent)}input[type="number"],input[type="text"]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);color:var(--text);outline:none}input:focus,textarea:focus{border-color:rgba(126,231,135,.65);box-shadow:0 0 0 3px rgba(126,231,135,.12)}.editor-wrap{display:grid;gap:8px}.editor-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px}textarea{min-height:440px;width:100%;resize:vertical;padding:12px;border:1px solid var(--line);border-radius:12px;background:#0b0e14;color:#dfe6f3;font-family:var(--mono);font-size:13px;line-height:1.45;tab-size:2;outline:none}.buttons{display:flex;flex-wrap:wrap;gap:10px}button{border:1px solid var(--line);border-radius:999px;padding:10px 14px;background:var(--panel-2);color:var(--text);cursor:pointer}button.primary{border-color:rgba(126,231,135,.6);background:rgba(126,231,135,.13);color:#d8ffdd}button:hover{filter:brightness(1.08)}.status{min-height:20px;color:var(--muted);font-size:12px;line-height:1.5;white-space:pre-wrap}.status.ok{color:var(--accent)}.status.error{color:var(--danger)}.stage-panel{padding:18px}.stage-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;color:var(--muted);font-size:12px}.stage{display:inline-block;padding:12px;border:1px solid var(--line);border-radius:14px;background:#05070a;max-width:100%;overflow:auto}canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;background:#000}code{font-family:var(--mono);color:#c9d1d9}@media(max-width:900px){body{padding:10px}.app{grid-template-columns:1fr}textarea{min-height:360px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel"><div class="header"><h1>GridShader v0.3</h1><div class="subtitle">C / SDL / Wasm scans the grid. JavaScript shades each dot. Hold the mouse button to paint.</div></div><div class="controls"><div class="grid"><label>Width<input id="widthInput" type="number" min="32" max="2048" step="1" /></label><label>Height<input id="heightInput" type="number" min="32" max="2048" step="1" /></label><label>Dot size<input id="dotSizeInput" type="number" min="1" max="128" step="1" /></label><label>Background<input id="backgroundInput" type="text" spellcheck="false" /></label></div><div class="editor-wrap"><div class="editor-title"><span>shader body</span><span>return <code>0xRRGGBB</code> or <code>packRGB(r,g,b)</code></span></div><textarea id="shaderSource" spellcheck="false"></textarea></div><div class="buttons"><button class="primary" id="applyButton">Apply</button><button id="resetButton">Reset sample</button><button id="clearStorageButton">Clear saved config</button></div><div id="status" class="status"></div></div></section>
+    <section class="panel stage-panel"><div class="stage-head"><span>C / SDL canvas</span><span id="runtimeLabel"></span></div><div class="stage"><canvas id="canvas"></canvas></div></section>
+  </div>
+  <script>
+    const STORAGE_KEY='gridShader.config.v3';
+    const defaultShaderSource=`// x, y        : dot/cell coordinates
+// fragX/Y     : pixel coordinates at the dot center
+// t           : frame counter from C
+// gridX/Y     : total grid size in dots
+// dotSize     : dot size in pixels
+// mouseX/Y    : mouse position in pixels, or -1
+// mouseDown   : 1 while mouse button is pressed, otherwise 0
+// packRGB     : helper to return 0xRRGGBB
+// clamp255    : helper to clamp color channels
 
-  flock = new Flock();
-  // Add an initial set of boids into the system
-  for (let i = 0; i < 100; i++) {
-    let b = new Boid(width / 2,height / 2);
-    flock.addBoid(b);
-  }
-}
+const gx = x + 0.5;
+const gy = y + 0.5;
 
-function draw() {
-  background(0);
-  flock.run();
-}
+const cx = gridX * 0.5;
+const cy = gridY * 0.5;
 
-// Add a new boid into the System
-function mouseDragged() {
-  flock.addBoid(new Boid(mouseX, mouseY));
-}
+const d = Math.hypot(gx - cx, gy - cy);
+const wave = Math.sin(d * 0.55 - t * 0.08);
 
-// The Nature of Code
-// Daniel Shiffman
-// http://natureofcode.com
+let r = 0;
+let g = wave > 0 ? 180 : 35;
+let b = wave > 0 ? 70 : 20;
 
-// Flock object
-// Does very little, simply manages the array of all the boids
+if (mouseX >= 0 && mouseY >= 0) {
+  const mx = mouseX / dotSize;
+  const my = mouseY / dotSize;
+  const md = Math.hypot(gx - mx, gy - my);
+  const glow = Math.exp(-(md * md) / 18.0);
 
-function Flock() {
-  // An array for all the boids
-  this.boids = []; // Initialize the array
-}
-
-Flock.prototype.run = function() {
-  for (let i = 0; i < this.boids.length; i++) {
-    this.boids[i].run(this.boids);  // Passing the entire list of boids to each boid individually
-  }
-}
-
-Flock.prototype.addBoid = function(b) {
-  this.boids.push(b);
-}
-
-// The Nature of Code
-// Daniel Shiffman
-// http://natureofcode.com
-
-// Boid class
-// Methods for Separation, Cohesion, Alignment added
-
-function Boid(x, y) {
-  this.acceleration = createVector(0, 0);
-  this.velocity = createVector(random(-1, 1), random(-1, 1));
-  this.position = createVector(x, y);
-  this.r = 3.0;
-  this.maxspeed = 3;    // Maximum speed
-  this.maxforce = 0.05; // Maximum steering force
-}
-
-Boid.prototype.run = function(boids) {
-  this.flock(boids);
-  this.update();
-  this.borders();
-  this.render();
-}
-
-Boid.prototype.applyForce = function(force) {
-  // We could add mass here if we want A = F / M
-  this.acceleration.add(force);
-}
-
-// We accumulate a new acceleration each time based on three rules
-Boid.prototype.flock = function(boids) {
-  let sep = this.separate(boids);   // Separation
-  let ali = this.align(boids);      // Alignment
-  let coh = this.cohesion(boids);   // Cohesion
-  // Arbitrarily weight these forces
-  sep.mult(1.5);
-  ali.mult(1.0);
-  coh.mult(1.0);
-  // Add the force vectors to acceleration
-  this.applyForce(sep);
-  this.applyForce(ali);
-  this.applyForce(coh);
-}
-
-// Method to update location
-Boid.prototype.update = function() {
-  // Update velocity
-  this.velocity.add(this.acceleration);
-  // Limit speed
-  this.velocity.limit(this.maxspeed);
-  this.position.add(this.velocity);
-  // Reset accelertion to 0 each cycle
-  this.acceleration.mult(0);
-}
-
-// A method that calculates and applies a steering force towards a target
-// STEER = DESIRED MINUS VELOCITY
-Boid.prototype.seek = function(target) {
-  let desired = p5.Vector.sub(target,this.position);  // A vector pointing from the location to the target
-  // Normalize desired and scale to maximum speed
-  desired.normalize();
-  desired.mult(this.maxspeed);
-  // Steering = Desired minus Velocity
-  let steer = p5.Vector.sub(desired,this.velocity);
-  steer.limit(this.maxforce);  // Limit to maximum steering force
-  return steer;
-}
-
-Boid.prototype.render = function() {
-  // Draw a triangle rotated in the direction of velocity
-  let theta = this.velocity.heading() + radians(90);
-  fill(127);
-  stroke(200);
-  push();
-  translate(this.position.x, this.position.y);
-  rotate(theta);
-  beginShape();
-  vertex(0, -this.r * 2);
-  vertex(-this.r, this.r * 2);
-  vertex(this.r, this.r * 2);
-  endShape(CLOSE);
-  pop();
-}
-
-// Wraparound
-Boid.prototype.borders = function() {
-  if (this.position.x < -this.r)  this.position.x = width + this.r;
-  if (this.position.y < -this.r)  this.position.y = height + this.r;
-  if (this.position.x > width + this.r) this.position.x = -this.r;
-  if (this.position.y > height + this.r) this.position.y = -this.r;
-}
-
-// Separation
-// Method checks for nearby boids and steers away
-Boid.prototype.separate = function(boids) {
-  let desiredseparation = 25.0;
-  let steer = createVector(0, 0);
-  let count = 0;
-  // For every boid in the system, check if it's too close
-  for (let i = 0; i < boids.length; i++) {
-    let d = p5.Vector.dist(this.position,boids[i].position);
-    // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
-    if ((d > 0) && (d < desiredseparation)) {
-      // Calculate vector pointing away from neighbor
-      let diff = p5.Vector.sub(this.position, boids[i].position);
-      diff.normalize();
-      diff.div(d);        // Weight by distance
-      steer.add(diff);
-      count++;            // Keep track of how many
-    }
-  }
-  // Average -- divide by how many
-  if (count > 0) {
-    steer.div(count);
-  }
-
-  // As long as the vector is greater than 0
-  if (steer.mag() > 0) {
-    // Implement Reynolds: Steering = Desired - Velocity
-    steer.normalize();
-    steer.mult(this.maxspeed);
-    steer.sub(this.velocity);
-    steer.limit(this.maxforce);
-  }
-  return steer;
-}
-
-// Alignment
-// For every nearby boid in the system, calculate the average velocity
-Boid.prototype.align = function(boids) {
-  let neighbordist = 50;
-  let sum = createVector(0,0);
-  let count = 0;
-  for (let i = 0; i < boids.length; i++) {
-    let d = p5.Vector.dist(this.position,boids[i].position);
-    if ((d > 0) && (d < neighbordist)) {
-      sum.add(boids[i].velocity);
-      count++;
-    }
-  }
-  if (count > 0) {
-    sum.div(count);
-    sum.normalize();
-    sum.mult(this.maxspeed);
-    let steer = p5.Vector.sub(sum, this.velocity);
-    steer.limit(this.maxforce);
-    return steer;
+  if (mouseDown) {
+    r = clamp255(r + glow * 255);
+    g = clamp255(g * (1.0 - glow * 0.55));
+    b = clamp255(b + glow * 80);
   } else {
-    return createVector(0, 0);
+    r = clamp255(r + glow * 60);
+    g = clamp255(g + glow * 80);
+    b = clamp255(b + glow * 120);
   }
 }
 
-// Cohesion
-// For the average location (i.e. center) of all nearby boids, calculate steering vector towards that location
-Boid.prototype.cohesion = function(boids) {
-  let neighbordist = 50;
-  let sum = createVector(0, 0);   // Start with empty vector to accumulate all locations
-  let count = 0;
-  for (let i = 0; i < boids.length; i++) {
-    let d = p5.Vector.dist(this.position,boids[i].position);
-    if ((d > 0) && (d < neighbordist)) {
-      sum.add(boids[i].position); // Add location
-      count++;
-    }
-  }
-  if (count > 0) {
-    sum.div(count);
-    return this.seek(sum);  // Steer towards the location
-  } else {
-    return createVector(0, 0);
-  }
-}
-
-    </script>
- <iframe width="320"
-    src="https://www.youtube.com/embed/JC-Erk0hMzc?autoplay=1&mute=1&playsinline=1&loop=1"
-    title="YouTube video player" frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
-    referrerpolicy="strict-origin-when-cross-origin"
-    allowfullscreen>
-</iframe>
-  <script src="scripts.js"></script> <script async src="https://www.googletagmanager.com/gtag/js?id=G-VYN4SZK0E6"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-VYN4SZK0E6');
-</script>  </body>  
+return packRGB(r, g, b);`;
+    const defaults={width:360,height:240,dotSize:6,backgroundText:'#000000',shaderSource:defaultShaderSource};
+    function readSavedConfig(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return{...defaults};return{...defaults,...JSON.parse(raw)}}catch(_){return{...defaults}}}
+    function saveConfig(config){localStorage.setItem(STORAGE_KEY,JSON.stringify(config))}
+    function clamp255(v){return Math.max(0,Math.min(255,v|0))}
+    function packRGB(r,g,b){return(clamp255(r)<<16)|(clamp255(g)<<8)|clamp255(b)}
+    function parseColor(text){const s=String(text||'').trim();if(/^#[0-9a-fA-F]{6}$/.test(s))return parseInt(s.slice(1),16)|0;if(/^0x[0-9a-fA-F]{6}$/.test(s))return parseInt(s.slice(2),16)|0;if(/^[0-9a-fA-F]{6}$/.test(s))return parseInt(s,16)|0;throw new Error('Background must be #RRGGBB, RRGGBB, or 0xRRGGBB.')}
+    function compileShader(source){return new Function('x','y','fragX','fragY','t','gridX','gridY','dotSize','mouseX','mouseY','mouseDown','packRGB','clamp255','"use strict";\n'+source)}
+    function setStatus(message,isError){const status=document.getElementById('status');status.textContent=message;status.className='status '+(isError?'error':'ok')}
+    function makeShadeDot(compiled){let lastRuntimeError='';return function shadeDot(x,y,fragX,fragY,t,gridX,gridY,dotSize,mouseX,mouseY,mouseDown){try{const color=compiled(x,y,fragX,fragY,t,gridX,gridY,dotSize,mouseX,mouseY,mouseDown,packRGB,clamp255);lastRuntimeError='';return color|0}catch(err){const msg=err&&err.message?err.message:String(err);if(msg!==lastRuntimeError){lastRuntimeError=msg;setStatus('Runtime shader error: '+msg,true)}return((x+y+((t/10)|0))&1)?0xff0033:0x220006}}}
+    function normalizeNumber(value,fallback,min,max){const n=Number(value);if(!Number.isFinite(n))return fallback;return Math.max(min,Math.min(max,Math.floor(n)))}
+    const initial=readSavedConfig();initial.width=normalizeNumber(initial.width,defaults.width,32,2048);initial.height=normalizeNumber(initial.height,defaults.height,32,2048);initial.dotSize=normalizeNumber(initial.dotSize,defaults.dotSize,1,128);
+    let compiledShader;try{compiledShader=compileShader(initial.shaderSource)}catch(err){compiledShader=compileShader(defaultShaderSource);initial.shaderSource=defaultShaderSource}
+    const gridShader={width:initial.width,height:initial.height,dotSize:initial.dotSize,background:parseColor(initial.backgroundText),shadeDot:makeShadeDot(compiledShader)};
+    const canvas=document.getElementById('canvas');canvas.width=gridShader.width;canvas.height=gridShader.height;canvas.style.width=gridShader.width+'px';canvas.style.height=gridShader.height+'px';
+    document.getElementById('widthInput').value=initial.width;document.getElementById('heightInput').value=initial.height;document.getElementById('dotSizeInput').value=initial.dotSize;document.getElementById('backgroundInput').value=initial.backgroundText;document.getElementById('shaderSource').value=initial.shaderSource;document.getElementById('runtimeLabel').textContent=`${gridShader.width} x ${gridShader.height}, dot ${gridShader.dotSize}`;
+    function collectFormConfig(){return{width:normalizeNumber(document.getElementById('widthInput').value,defaults.width,32,2048),height:normalizeNumber(document.getElementById('heightInput').value,defaults.height,32,2048),dotSize:normalizeNumber(document.getElementById('dotSizeInput').value,defaults.dotSize,1,128),backgroundText:document.getElementById('backgroundInput').value.trim(),shaderSource:document.getElementById('shaderSource').value}}
+    document.getElementById('applyButton').addEventListener('click',()=>{let next,nextBackground,nextCompiled;try{next=collectFormConfig();nextBackground=parseColor(next.backgroundText);nextCompiled=compileShader(next.shaderSource)}catch(err){setStatus(err.message||String(err),true);return}saveConfig(next);const startupChanged=next.width!==gridShader.width||next.height!==gridShader.height||next.dotSize!==gridShader.dotSize;if(startupChanged){setStatus('Width / height / dotSize are startup values. Reloading to apply them...',false);setTimeout(()=>location.reload(),180);return}gridShader.background=nextBackground;gridShader.shadeDot=makeShadeDot(nextCompiled);setStatus('Applied live.',false)});
+    document.getElementById('resetButton').addEventListener('click',()=>{document.getElementById('widthInput').value=defaults.width;document.getElementById('heightInput').value=defaults.height;document.getElementById('dotSizeInput').value=defaults.dotSize;document.getElementById('backgroundInput').value=defaults.backgroundText;document.getElementById('shaderSource').value=defaults.shaderSource;setStatus('Sample restored in the editor. Press Apply.',false)});
+    document.getElementById('clearStorageButton').addEventListener('click',()=>{localStorage.removeItem(STORAGE_KEY);setStatus('Saved config cleared. Reloading...',false);setTimeout(()=>location.reload(),180)});
+    function installEditorInputGuards(){const editable=document.querySelectorAll('input, textarea');for(const el of editable){for(const type of ['keydown','keyup','keypress','beforeinput','input','compositionstart','compositionupdate','compositionend','pointerdown','pointerup','mousedown','mouseup','click']){el.addEventListener(type,event=>{event.stopPropagation()})}}}
+    installEditorInputGuards();
+    var Module={canvas,gridShader,doNotCaptureKeyboard:true,keyboardListeningElement:canvas,print:text=>console.log(text),printErr:text=>console.error(text)};
+  </script>
+  <script src="app.js"></script>
+</body>
 </html>
